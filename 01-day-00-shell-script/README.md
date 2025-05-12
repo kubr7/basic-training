@@ -1,3 +1,4 @@
+## Shell Script Assignment – Branch: `01-assignment-shell-script`
 # 📜 Day 0 - Shell Script Assignment  
 **File:** `Basic_Training_Day_0_Shell_Script_Assignment.sh`  
 **Author:** `<kubr7>`
