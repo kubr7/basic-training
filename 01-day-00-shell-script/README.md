@@ -1,5 +1,8 @@
-# Shell Script Assignment
+**Branch:** `01-assignment-shell-script`
 **File:** `Basic_Training_Day_0_Shell_Script_Assignment.sh`
+
+
+# Shell Script Assignment
 
 ## Tasks
 
