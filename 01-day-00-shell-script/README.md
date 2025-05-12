@@ -1,149 +1,48 @@
-## Shell Script Assignment – Branch: `01-assignment-shell-script`
-# Day 0 - Shell Script Assignment  
-**File:** `Basic_Training_Day_0_Shell_Script_Assignment.sh`  
-**Author:** `<kubr7>`
+# Shell Script Assignment
+**File:** `Basic_Training_Day_0_Shell_Script_Assignment.sh`
 
----
+## Tasks
 
-## Objective
-The objective of this assignment is to practice fundamental shell scripting and Linux commands. It includes file and folder manipulations, text operations, permission changes, process handling, and understanding command differences.
-
----
-
-### Q1: Tasks & Commands
-
-### a. Create a folder named `sample` in your home directory:
+1. Create and manage files:
 ```bash
 mkdir ~/sample
-```
-
-### b. Create a file named `sample.txt` inside `sample` folder:
-```bash
 touch ~/sample/sample.txt
-```
-
-### c. Add content to the file:
-```bash
 echo "Hi! This is just a sample text file created using a shell script." > ~/sample/sample.txt
 ```
 
-### d. Print the contents of the file:
+2. File operations:
 ```bash
-cat ~/sample/sample.txt
+cat ~/sample/sample.txt                    # View file contents
+grep -o 't' ~/sample/sample.txt | wc -l    # Count letter 't'
+cp ~/sample/sample.txt ~/sample/sample2.txt # Copy file
 ```
 
-### e. Count occurrences of letter `t`:
+3. File permissions:
 ```bash
-grep -o 't' ~/sample/sample.txt | wc -l
+chmod u+rwx ~/sample/sample.txt  # Owner: Read, Write, Execute
+chmod g=r ~/sample/sample.txt    # Group: Read-only
+chmod o= ~/sample/sample.txt     # Others: No access
 ```
 
-### f. Change **owner** permissions to Read, Write, Execute:
+4. File manipulation:
 ```bash
-chmod u+rwx ~/sample/sample.txt
+echo "New content" >> ~/sample/sample.txt  # Append content
+head -n 50 ~/sample/sample.txt             # View first 50 lines
+tail -n 50 ~/sample/sample.txt             # View last 50 lines
 ```
 
-### g. Append more content to `sample.txt`:
+5. Process management:
 ```bash
-echo "Hi! This is just another sample text added to the file." >> ~/sample/sample.txt
+lsof -i :<port>    # View process on port
+kill -9 <PID>      # Kill process
 ```
 
-### h. Allow **group** read-only permission:
+6. Environment:
 ```bash
-chmod g=r ~/sample/sample.txt
+export VAR="value"  # Set environment variable
+source ~/.bashrc    # Reload shell configuration
 ```
 
-### i. Deny **others** any access:
-```bash
-chmod o= ~/sample/sample.txt
-```
-
-### j. Create `sample2.txt` with the same content as `sample.txt`:
-```bash
-cp ~/sample/sample.txt ~/sample/sample2.txt
-```
-
-### k. Add 1000 random lines to `sample.txt`:
-```bash
-yes "This is a random line." | head -n 1000 >> ~/sample/sample.txt
-```
-
-### l. Print the **top 50 lines** of `sample.txt`:
-```bash
-head -n 50 ~/sample/sample.txt
-```
-
-### m. Print the **bottom 50 lines** of `sample.txt`:
-```bash
-tail -n 50 ~/sample/sample.txt
-```
-
-### n. Create 5 more files:
-```bash
-touch ~/sample/prog1.txt ~/sample/prog2.txt ~/sample/program.txt ~/sample/code.txt ~/sample/info.txt
-```
-
-### o. List files with `"prog"` in the name:
-```bash
-ls ~/sample | grep 'prog'
-```
-
-### p. Create an alias `list` for the above:
-```bash
-alias list='ls ~/sample | grep prog'
-```
-Now, run:
-```bash
-list
-```
-
----
-
-
-### Q2: What is the difference between `source` and `sh`?
-- `source` runs a script **in the current shell**, so any environment variable or function remains available.
-- `sh` executes the script in a **subshell**, so any changes made to the environment do **not** persist in the current shell.
-
-### Q3: Create `a.txt` and `b.txt`, find differences:
-```bash
-diff a.txt b.txt
-```
-
-### Q4: What is the difference between `ls` and `lsof`?
-- `ls`: Lists **files and directories**.
-- `lsof`: Lists **open files** by **active processes** (used for debugging, port usage, etc).
-
-### Q5: Create nested directories (`hello/world`) in a single command:
-```bash
-mkdir -p ./hello/world
-```
-
-### Q6: How to permanently set an environment variable:
-Edit `~/.bashrc` or `~/.bash_profile`:
-```bash
-export MY_VAR="my_value"
-```
-Then reload:
-```bash
-source ~/.bashrc
-```
-
-### Q7: View and kill a process on a port:
-To check:
-```bash
-lsof -i :<port_number>
-```
-Example:
-```bash
-lsof -i :3000
-```
-To kill:
-```bash
-kill -9 <PID>
-```
-
----
-
-## Summary
-This assignment strengthens basic Linux shell scripting knowledge, command-line fluency, and system operation awareness—essential for developers and system administrators alike.
-
----
+## Key Differences
+- `source` vs `sh`: source runs in current shell, sh runs in subshell
+- `ls` vs `lsof`: ls lists files, lsof shows open files by processes
