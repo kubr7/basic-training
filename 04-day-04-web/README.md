@@ -1,131 +1,137 @@
-# SaySomething API
+# SaySomething - Social Media API
 
-A social media-style backend built with NestJS, providing user authentication, friend request features, and post creation with likes functionality.
+A modern social media API built with NestJS, featuring user authentication, posts, and friend management.
 
----
+## Features
 
-## Tech Stack
+-  JWT-based Authentication
+-  User Management
+-  Post Creation and Management
+-  Friend System
+-  PostgreSQL Database
+-  Swagger API Documentation
+-  Testing Setup
 
-- **NestJS**: Progressive Node.js framework for scalable server-side applications
-- **TypeORM**: ORM for working with PostgreSQL
-- **PostgreSQL**: Relational database
-- **JWT**: JSON Web Token-based authentication
-- **bcrypt**: Secure password hashing
-- **class-validator**: Validation for DTOs and request bodies
+## Prerequisites
 
----
+- Node.js (v16 or higher)
+- PostgreSQL
+- npm or yarn
 
-## Project Structure Overview
-src/
-│
-├── auth/                       // Login, register, JWT
-├── friends/                    // Friends entity, Send Request, Accept request, Reject
-├── posts/                      // Post entity, creation, likes, listing
-├── users/                      // User entity, friend logic
-├── app.module.ts
-├── main.ts
+## Installation
 
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd saysomething
+```
 
+2. Install dependencies:
+```bash
+npm install
+```
 
-## JWT Authentication and Authorization
+3. Create a `.env` file in the root directory with the following variables:
+```env
+DATABASE_URL=postgresql://username:password@localhost:5432/saysomething
+JWT_SECRET=your_jwt_secret_key
+```
 
-- Protected routes use: `@UseGuards(JwtAuthGuard)`
-- Extract user from JWT using: `@Request()` is a NestJS decorator (alias for `@Req()`) that injects the full request object. `req.user` is populated automatically by `Passport` if the request passes through an `authentication guard using the JWT strategy`.
+4. Run database migrations:
+```bash
+npm run migration:run
+```
 
+## Running the Application
 
+### Development
+```bash
+npm run start:dev
+```
 
----
+### Production
+```bash
+npm run build
+npm run start:prod
+```
 
-## API Endpoints Summary
+## API Documentation
 
-### App
+Once the application is running, you can access the Swagger API documentation at:
+```
+http://localhost:3000/api
+```
 
-| Method | Endpoint      | Description                 |
-|--------|---------------|-----------------------------|
-| GET    | `/`           | SaySomething API base route |
+## API Endpoints
 
----
+### Authentication
+- `POST /auth/register` - Register a new user
+- `POST /auth/login` - Login a user
+- `POST /auth/logout` - Logout a user
 
-### User
-
-| Method | Endpoint                         | Description                       |
-|--------|----------------------------------|-----------------------------------|
-| GET    | `/users`                         | Get all users                     |
-| GET    | `/users/{id}`                    | Get user by ID                    |
-| GET    | `/users/by-email/{email}`        | Get user by email                 |
-| GET    | `/users/by-username/{username}`  | Get user by username              |
-| GET    | `/users/{username}/friends`      | Get user's friends by username    |
-
----
-
-### Auth
-
-| Method | Endpoint         | Description                |
-|--------|------------------|----------------------------|
-| POST   | `/auth/register` | Register a new user        |
-| POST   | `/auth/login`    | Login a user (returns JWT) |
-| POST   | `/auth/logout`   | Logout a user              |
-
----
+### Users
+- `GET /users` - Get all users
+- `GET /users/:id` - Get a user by ID
+- `GET /users/by-email/:email` - Get user by email
+- `GET /users/by-username/:username` - Get a user by username
+- `GET /users/:username/friends` - Get user friends by username
 
 ### Posts
-
-| Method | Endpoint                                  | Description                  |
-|--------|-------------------------------------------|------------------------------|
-| POST   | `/posts/create`                           | Create a new post            |
-| POST   | `/posts/like/{postId}`                    | Like a post                  |
-| GET    | `/posts`                                  | Get all posts                |
-| GET    | `/posts/{username}`                       | Get posts by username        |
-
----
+- `POST /posts/create` - Create a new post (Protected)
+- `POST /posts/like/:postId` - Like a post (Protected)
+- `GET /posts` - Get all posts
+- `GET /posts/:username` - Get posts by username (Protected)
 
 ### Friends
+- `POST /friends/request/:receiverUsername` - Send a friend request
+- `POST /friends/accept/:senderUsername` - Accept a friend request
+- `POST /friends/reject/:senderUsername` - Reject a friend request
+- `GET /friends/friend-requests/:username` - Get friend requests
+- `GET /friends/friends/:username` - Get friends
 
-| Method | Endpoint                                  | Description                  |
-|--------|-------------------------------------------|------------------------------|
-| POST   | `/friends/request/{receiverUsername}`     | Send a friend request        |
-| POST   | `/friends/accept/{senderUsername}`        | Accept a friend request      |
-| POST   | `/friends/reject/{senderUsername}`        | Reject a friend request      |
-| GET    | `/friends/friend-requests/{username}`     | Get pending friend requests  |
-| GET    | `/friends/friends/{username}`             | Get a user's friends         |
+Note: Endpoints marked with (Protected) require JWT authentication.
 
----
+## Available Scripts
 
-## Schemas (DTOs)
+- `npm run build` - Build the application
+- `npm run start:dev` - Start the application in development mode
+- `npm run start:prod` - Start the application in production mode
+- `npm run test` - Run unit tests
+- `npm run test:e2e` - Run end-to-end tests
+- `npm run migration:generate` - Generate a new migration
+- `npm run migration:run` - Run pending migrations
+- `npm run migration:revert` - Revert the last migration
 
-- **GetAllUsersDto**
-- **User**
-- **UserFriendDto**
-- **RegisterDto**
-- **LoginDto**
-- **LogoutDto**
-- **CreatePostDto**
-- **LikePostDto**
-- **SendFriendRequestDto**
-- **AcceptFriendRequestDto**
-- **RejectFriendRequestDto**
+## Project Structure
 
----
+```
+src/
+├── auth/           # Authentication related code
+├── users/          # User management
+├── posts/          # Post management
+├── friends/        # Friend system
+├── migrations/     # Database migrations
+└── main.ts         # Application entry point
+```
 
-## Getting Started
+## Technologies Used
 
-### Prerequisites
+- NestJS - Progressive Node.js framework
+- TypeORM - ORM for database operations
+- PostgreSQL - Database
+- JWT - Authentication
+- Passport.js - Authentication middleware
+- Swagger - API documentation
+- Jest - Testing framework
 
-- Node.js (v18+ recommended)
-- PostgreSQL
+## Contributing
 
-### Installation
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-```bash
-git clone https://github.com/your-username/saysomething-api.git
-cd saysomething-api
-npm install
+## License
 
-
----
-
-### Run the Application
-## `npm run start:dev`
-
-### Build for Production
-## `npm run build`
+This project is licensed under the MIT License - see the LICENSE file for details.
