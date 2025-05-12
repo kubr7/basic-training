@@ -27,7 +27,7 @@ src/
 
 
 
-## JWT Authentication
+## JWT Authentication and Authorization
 
 - Protected routes use: `@UseGuards(JwtAuthGuard)`
 - Extract user from JWT using: `@Request()` is a NestJS decorator (alias for `@Req()`) that injects the full request object. `req.user` is populated automatically by `Passport` if the request passes through an `authentication guard using the JWT strategy`.
