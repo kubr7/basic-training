@@ -1,34 +1,72 @@
-## JavaScript Assignment – Branch: `03-assignment-javascript`
-# Day 2 - JavaScript Assignment  
 **Branch:** `03-assignment-javascript`
 **File:** `Basic_Training_Day_2_JavaScript_Assignment.sh`
 **Author:** `<kubr7>`
 
----
 
-This assignment demonstrates several key JavaScript concepts through four problems:
+# JavaScript Assignment
 
-### Problems Implemented
+This assignment contains four JavaScript problems that test different aspects of array manipulation, string processing, and object handling.
 
-1. **`secondLargest(array)`**
-   - Finds the second largest number without using `.sort()`.
-   - Manages edge cases and input validation.
+## Problems
 
-2. **`calculateFrequency(string)`**
-   - Counts character frequency using arrays (no built-in methods).
-   - Focuses on lowercase ASCII letters only.
+### 1. Second Largest Number
+The `secondLargest` function finds the second biggest number in an array without using the sort method.
 
-3. **`flatten(unflatObject)`**
-   - Flattens nested JavaScript objects or arrays into dot-notated keys.
+```javascript
+const numbers = [5, 2, 8, 1, 9];
+console.log(secondLargest(numbers)); // Output: 8
+```
 
-4. **`unflatten(flatObject)`**
-   - Reconstructs nested structure from a flattened dot-notated object.
+### 2. Character Frequency Counter
+The `calculateFrequency` function counts the frequency of all English alphabet characters in a lowercase string.
 
-### Concepts Practiced
+```javascript
+const text = "hello";
+console.log(calculateFrequency(text));
+// Output: { h: 1, e: 1, l: 2, o: 1 }
+```
 
-- Array manipulation and conditionals  
-- Manual frequency calculation using ASCII  
-- Recursive object traversal  
-- Type checking and nesting logic  
+### 3. Object Flattening
+The `flatten` function converts a nested JavaScript object into a flattened format.
 
----
+```javascript
+const nested = {
+    a: 1,
+    b: {
+        c: 2,
+        d: {
+            e: 3
+        }
+    }
+};
+console.log(flatten(nested));
+// Output: { 'a': 1, 'b.c': 2, 'b.d.e': 3 }
+```
+
+### 4. Object Unflattening
+The `unflatten` function converts a flattened JavaScript object back into a nested format.
+
+```javascript
+const flat = {
+    'a': 1,
+    'b.c': 2,
+    'b.d.e': 3
+};
+console.log(unflatten(flat));
+// Output: { a: 1, b: { c: 2, d: { e: 3 } } }
+```
+
+## How to Run
+
+1. Open the `javascript-assignment.js` file
+2. Each function is self-contained and can be tested independently
+3. Use Node.js to run the file:
+   ```bash
+   node javascript-assignment.js
+   ```
+
+## Notes
+
+- All functions are implemented without using built-in JavaScript methods where specified
+- The code includes error handling for edge cases
+- Each function is documented with comments explaining the implementation

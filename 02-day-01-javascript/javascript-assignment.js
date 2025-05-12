@@ -1,7 +1,6 @@
 // Problem 1: Complete the secondLargest function which takes in an array of numbers in input and return the second biggest number in the array. (without using sort)?
 
 function secondLargest(array) {
-    // Write your code here
     if (!Array.isArray(array) || array.length < 2) return null;
 
     let largest = -Infinity;
@@ -22,7 +21,7 @@ function secondLargest(array) {
 // Problem 2: Complete the calculateFrequency function that takes lowercase string as input and returns frequency of all english alphabet. (using only array, no in-built function)
 
 function calculateFrequency(string) {
-    // Write your code here
+
     let freq = new Array(26);
     for (let i = 0; i < 26; i++) {
         freq[i] = 0;
@@ -51,7 +50,6 @@ function calculateFrequency(string) {
 // Problem 3: Complete the flatten function that takes a JS Object, returns a JS Object in flatten format (compressed)
 
 function flatten(unflatObject) {
-    // Write your code here
     let result = {};
 
     function recurse(curr, path) {
@@ -75,7 +73,6 @@ function flatten(unflatObject) {
 // Problem 4: Complete the unflatten function that takes a JS Object, returns a JS Object in unflatten format
 
 function unflatten(flatObject) {
-    // Write your code here
     let result = {};
 
     for (let flatKey in flatObject) {
@@ -101,3 +98,11 @@ function unflatten(flatObject) {
 
     return result;
 }
+
+// Export the functions for testing
+module.exports = {
+    secondLargest,
+    calculateFrequency,
+    flatten,
+    unflatten
+};
