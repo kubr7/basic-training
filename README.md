@@ -207,16 +207,6 @@ This assignment demonstrates several key JavaScript concepts through four proble
 
 ---
 
-## Getting Started
-
-1. Clone the repo:
-   ```bash
-   git clone https://github.com/your-username/basic-training.git
-
-
-
-
-
 ## Git Assignment – Branch: `03-assignment-git`
 # 📘 Day 3 - Git Assignment
 **Branch:** `03-assignment-git`  
@@ -414,3 +404,8 @@ This assignment reinforces core Git workflows such as staging, committing, pushi
 
 ---
 
+## Getting Started
+
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/your-username/basic-training.git
