@@ -1,148 +1,194 @@
-# 📜 Day 0 - Shell Script Assignment  
-**File:** `Basic_Training_Day_0_Shell_Script_Assignment.sh`  
-**Author:** `<kubr7>`
+# 📘 Day 3 - Git Assignment  
+**File:** `Basic_Training_Day_3_Git_Assignment.sh`  
+**Author:** `<kubr7>`  
 
 ---
 
-## 📂 Objective
-The objective of this assignment is to practice fundamental shell scripting and Linux commands. It includes file and folder manipulations, text operations, permission changes, process handling, and understanding command differences.
+## 🎯 Objective
+The goal of this assignment is to reinforce basic Git concepts including repository setup, committing, staging, pushing, editing commit history, and cloning. The assignment walks through a realistic Git workflow scenario.
 
 ---
 
-### ❓ Q1: Tasks & Commands
+## 📝 Steps and Commands
 
-### ✅ a. Create a folder named `sample` in your home directory:
+### ✅ 1. Create a private GitHub repo:
+- Repo Name: `i-am-a-git-noob`
+
+### ✅ 2. Create a local repository (without cloning):
 ```bash
-mkdir ~/sample
+mkdir i-am-a-git-noob
+cd i-am-a-git-noob
+git init
 ```
 
-### ✅ b. Create a file named `sample.txt` inside `sample` folder:
+### ❓ Q: What changes did you observe?
+**A:** A hidden `.git` directory is created in the current folder, which contains all the configuration, history, and metadata for the repo.
+
+---
+
+### ✅ 3. Add the remote URL:
 ```bash
-touch ~/sample/sample.txt
+git remote add origin https://github.com/<your-username>/i-am-a-git-noob.git
 ```
 
-### ✅ c. Add content to the file:
+### ✅ 4. Print current Git configuration:
 ```bash
-echo "Hi! This is just a sample text file created using a shell script." > ~/sample/sample.txt
+git config --list
 ```
 
-### ✅ d. Print the contents of the file:
+### ✅ 5. Set Git config for current repo:
 ```bash
-cat ~/sample/sample.txt
-```
-
-### ✅ e. Count occurrences of letter `t`:
-```bash
-grep -o 't' ~/sample/sample.txt | wc -l
-```
-
-### ✅ f. Change **owner** permissions to Read, Write, Execute:
-```bash
-chmod u+rwx ~/sample/sample.txt
-```
-
-### ✅ g. Append more content to `sample.txt`:
-```bash
-echo "Hi! This is just another sample text added to the file." >> ~/sample/sample.txt
-```
-
-### ✅ h. Allow **group** read-only permission:
-```bash
-chmod g=r ~/sample/sample.txt
-```
-
-### ✅ i. Deny **others** any access:
-```bash
-chmod o= ~/sample/sample.txt
-```
-
-### ✅ j. Create `sample2.txt` with the same content as `sample.txt`:
-```bash
-cp ~/sample/sample.txt ~/sample/sample2.txt
-```
-
-### ✅ k. Add 1000 random lines to `sample.txt`:
-```bash
-yes "This is a random line." | head -n 1000 >> ~/sample/sample.txt
-```
-
-### ✅ l. Print the **top 50 lines** of `sample.txt`:
-```bash
-head -n 50 ~/sample/sample.txt
-```
-
-### ✅ m. Print the **bottom 50 lines** of `sample.txt`:
-```bash
-tail -n 50 ~/sample/sample.txt
-```
-
-### ✅ n. Create 5 more files:
-```bash
-touch ~/sample/prog1.txt ~/sample/prog2.txt ~/sample/program.txt ~/sample/code.txt ~/sample/info.txt
-```
-
-### ✅ o. List files with `"prog"` in the name:
-```bash
-ls ~/sample | grep 'prog'
-```
-
-### ✅ p. Create an alias `list` for the above:
-```bash
-alias list='ls ~/sample | grep prog'
-```
-Now, run:
-```bash
-list
+git config user.name "Your Name"
+git config user.email "your.email@example.com"
 ```
 
 ---
 
-
-### ❓ Q2: What is the difference between `source` and `sh`?
-- `source` runs a script **in the current shell**, so any environment variable or function remains available.
-- `sh` executes the script in a **subshell**, so any changes made to the environment do **not** persist in the current shell.
-
-### ❓ Q3: Create `a.txt` and `b.txt`, find differences:
+### ✅ 6. Create `test1.txt`:
 ```bash
-diff a.txt b.txt
+touch .test1.txt
+```
+---
+
+### ✅ 7. Add line "first line in file" in test1.txt:
+```bash
+echo "first line in file" > test1.txt
 ```
 
-### ❓ Q4: What is the difference between `ls` and `lsof`?
-- `ls`: Lists **files and directories**.
-- `lsof`: Lists **open files** by **active processes** (used for debugging, port usage, etc).
-
-### ❓ Q5: Create nested directories (`hello/world`) in a single command:
+### ✅ 8. Stage and commit the file, then push:
 ```bash
-mkdir -p ./hello/world
-```
-
-### ❓ Q6: How to permanently set an environment variable:
-Edit `~/.bashrc` or `~/.bash_profile`:
-```bash
-export MY_VAR="my_value"
-```
-Then reload:
-```bash
-source ~/.bashrc
-```
-
-### ❓ Q7: View and kill a process on a port:
-To check:
-```bash
-lsof -i :<port_number>
-```
-Example:
-```bash
-lsof -i :3000
-```
-To kill:
-```bash
-kill -9 <PID>
+git add test1.txt
+git commit -m "Initial commit"
+git push -u origin master
 ```
 
 ---
 
-## 🧠 Summary
-This assignment strengthens basic Linux shell scripting knowledge, command-line fluency, and system operation awareness—essential for developers and system administrators alike.
+### ✅ 9. Append "second line in file":
+```bash
+echo "second line in file" >> test1.txt
+```
+
+### ✅ 10. Add to staging area:
+```bash
+git add test1.txt
+```
+
+### ✅ 11. Check status:
+```bash
+git status
+```
+
+---
+
+### ✅ 12. Append "third line in file":
+```bash
+echo "third line in file" >> test1.txt
+```
+
+```bash
+git status
+```
+
+---
+
+### ✅ 13. Remove from staging:
+```bash
+git reset test1.txt
+```
+
+---
+
+### ✅ 14. Create a commit:
+```bash
+git add test1.txt
+git commit -m "My First Commit"
+```
+
+### ✅ 15. Push commit:
+```bash
+git push origin master
+```
+
+---
+
+### ✅ 16. Change commit message to "My Second Commit":
+```bash
+git commit --amend -m "My Second Commit"
+git push --force origin master
+```
+
+---
+
+### ✅ 17. Push commit with the updated message:
+```bash
+git push --force origin master
+```
+
+---
+
+### ✅ 18. View commit differences:
+```bash
+git log --oneline
+git diff HEAD~1 HEAD
+```
+
+---
+
+### ✅ 19. Revert last commit:
+```bash
+git revert HEAD
+git log --oneline
+```
+
+---
+
+### ✅ 20. Add "Fourth line in file" and commit:
+```bash
+echo "Fourth line in file" >> test1.txt
+git add test1.txt
+git commit -m "Added fourth line"
+```
+
+### ✅ 21. Update last commit with "Fifth line in file" (no new commit):
+```bash
+echo "Fifth line in file" >> test1.txt
+git add test1.txt
+git commit --amend --no-edit
+git push --force origin master
+```
+
+---
+
+### ✅ 22. Push the updated commits :
+```bash
+git commit --amend --no-edit
+git push --force origin master
+```
+
+---
+
+### ✅ 23. Append more content:
+```bash
+echo "Another appended line" >> test1.txt
+```
+
+### ✅ 24. Pull remote changes:
+```bash
+git pull origin master
+```
+
+---
+
+### ✅ 25. Clone repo to another directory:
+```bash
+cd ..
+git clone https://github.com/<your-username>/i-am-a-git-noob.git cloned-i-am-a-git-noob
+```
+
+---
+
+## ✅ Summary
+This assignment reinforces core Git workflows such as staging, committing, pushing, changing commit messages, handling conflicts, and cloning repositories. These are essential skills for collaborative software development.
 
 ---
