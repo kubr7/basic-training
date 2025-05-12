@@ -1,6 +1,5 @@
 **Branch:** `03-assignment-javascript`
 **File:** `Basic_Training_Day_2_JavaScript_Assignment.sh`
-**Author:** `<kubr7>`
 
 
 # JavaScript Assignment
