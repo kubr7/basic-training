@@ -14,7 +14,7 @@ export class AuthService {
         private jwtService: JwtService,
     ) { }
 
-    async register(registerDto: RegisterDto) {
+    async register(registerDto: RegisterDto): Promise<{ access_token: string }> {
 
         const existingUser = await this.userService.getUserByEmail(registerDto.email);
         if (existingUser) {
