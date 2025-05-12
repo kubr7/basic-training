@@ -1,4 +1,4 @@
-**Branch:** `03-assignment-javascript`
+**Branch:** `02-assignment-javascript`
 **File:** `Basic_Training_Day_2_JavaScript_Assignment.sh`
 
 
