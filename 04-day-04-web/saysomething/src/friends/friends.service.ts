@@ -185,8 +185,7 @@ export class FriendsService {
         if (!user.friends || user.friends.length === 0) {
             throw new NotFoundException('No friends found for this user');
         }
-
-        // return user.friends.map(friend => ({ name: `${friend.firstName} ${friend.lastName}` }));
+        
         return user.friends.map(friend => `${friend.firstName} ${friend.lastName}`);
 
     }
