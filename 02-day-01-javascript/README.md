@@ -63,9 +63,4 @@ console.log(unflatten(flat));
    ```bash
    node javascript-assignment.js
    ```
-
-## Notes
-
-- All functions are implemented without using built-in JavaScript methods where specified
-- The code includes error handling for edge cases
-- Each function is documented with comments explaining the implementation
+   

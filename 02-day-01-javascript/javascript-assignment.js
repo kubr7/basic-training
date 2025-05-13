@@ -98,11 +98,3 @@ function unflatten(flatObject) {
 
     return result;
 }
-
-// Export the functions for testing
-module.exports = {
-    secondLargest,
-    calculateFrequency,
-    flatten,
-    unflatten
-};
