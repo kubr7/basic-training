@@ -10,7 +10,6 @@ A modern social media API built with NestJS, featuring user authentication, post
 -  Friend System
 -  PostgreSQL Database
 -  Swagger API Documentation
--  Testing Setup
 
 ## Prerequisites
 
@@ -33,7 +32,6 @@ npm install
 
 3. Create a `.env` file in the root directory with the following variables:
 ```env
-DATABASE_URL=postgresql://username:password@localhost:5432/saysomething
 JWT_SECRET=your_jwt_secret_key
 ```
 
@@ -95,9 +93,6 @@ Note: Endpoints marked with (Protected) require JWT authentication.
 
 - `npm run build` - Build the application
 - `npm run start:dev` - Start the application in development mode
-- `npm run start:prod` - Start the application in production mode
-- `npm run test` - Run unit tests
-- `npm run test:e2e` - Run end-to-end tests
 - `npm run migration:generate` - Generate a new migration
 - `npm run migration:run` - Run pending migrations
 - `npm run migration:revert` - Revert the last migration
@@ -122,7 +117,6 @@ src/
 - JWT - Authentication
 - Passport.js - Authentication middleware
 - Swagger - API documentation
-- Jest - Testing framework
 
 ## Contributing
 
