@@ -1,11 +1,10 @@
 // src/users/users.controller.ts
-import { Controller, Post, Param, Body, Get } from '@nestjs/common';
+import { Controller, Param, Get } from '@nestjs/common';
 import { UserService } from './users.service';
-// import { UserResponseDto } from './dto/user-response.dto';
 import { UserFriendDto } from './dto/user-friend.dto';
 import { GetAllUsersDto } from './dto/get-all-users.dto';
 import { User } from './user.entity';
-import { ApiOperation, ApiQuery, ApiOkResponse, ApiBadRequestResponse, ApiNotFoundResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ApiOperation, ApiOkResponse, ApiBadRequestResponse, ApiNotFoundResponse, ApiParam } from '@nestjs/swagger';
 
 @Controller('users')
 export class UserController {
@@ -16,7 +15,7 @@ export class UserController {
     @ApiOkResponse({
         description: 'All users retrieved successfully',
         type: GetAllUsersDto,
-        isArray: true, // Because this returns an array
+        isArray: true,
     })
     @ApiNotFoundResponse({ description: 'No users found' })
     @ApiBadRequestResponse({ description: 'Bad Request' })

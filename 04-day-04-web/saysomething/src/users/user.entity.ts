@@ -1,6 +1,7 @@
 // src/users/user.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable, OneToMany, Index } from 'typeorm';
 import { Post } from '../posts/post.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class User {
@@ -8,6 +9,7 @@ export class User {
     id: number;
 
     @Column({ unique: true })
+    @Index()
     username: string;
 
     @Column()
@@ -17,30 +19,29 @@ export class User {
     lastName: string;
 
     @Column({ unique: true })
+    @Index()
     email: string;
 
     @Column()
+    @Exclude()
     password: string;
 
     @OneToMany(() => Post, (post) => post.author)
     posts: Post[];
 
-    @ManyToMany(() => Post, (post) => post.likedBy, { eager: false })
+    @ManyToMany(() => Post, (post) => post.likedBy)
     likedPosts: Post[];
 
-    // @ManyToMany(() => User, (user) => user.friends)
-    // @JoinTable()
-    // friends: User[];
 
     @ManyToMany(() => User, user => user.friends)
     @JoinTable({
-        name: 'user_friends', // custom join table name
+        name: 'user_friends',
         joinColumn: {
-            name: 'user_id',        // current user's column
+            name: 'user_id',
             referencedColumnName: 'id',
         },
         inverseJoinColumn: {
-            name: 'friend_id',      // friend's column
+            name: 'friend_id',
             referencedColumnName: 'id',
         },
     })

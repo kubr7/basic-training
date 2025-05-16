@@ -9,6 +9,7 @@ import { PostResponseDto } from './dto/post-response.dto';
 import { CreatePostResponseDto } from './dto/create-post-reponse.dto';
 import { PostLikeResponseDto } from './dto/post-like-reponse.dto';
 import { PostByUserResponseDto } from './dto/post-by-user-response.dto';
+
 @Injectable()
 export class PostsService {
     constructor(
@@ -54,9 +55,7 @@ export class PostsService {
         return plainToInstance(PostLikeResponseDto, {
             ...updatedPost,
             author: post.author.username,
-            likedBy: updatedPost.likedBy.map(u => u.username),
-            // author: post.author.username,
-            // likedBy: updatedPost.likedBy.map(u => u.username),
+            likedBy: updatedPost.likedBy.map(u => u.username), 
         }, { excludeExtraneousValues: true });
     }
 

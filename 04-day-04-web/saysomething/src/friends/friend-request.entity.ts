@@ -1,5 +1,5 @@
 // src/friends/friend-request.entity.ts
-import { Entity, PrimaryGeneratedColumn, ManyToOne, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, Column, CreateDateColumn, Index, Unique } from 'typeorm';
 import { User } from '../users/user.entity';
 
 export enum FriendRequestStatus {
@@ -9,14 +9,17 @@ export enum FriendRequestStatus {
 }
 
 @Entity()
+@Unique(['sender', 'receiver'])
 export class FriendRequest {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @ManyToOne(() => User)
+    @ManyToOne(() => User, { onDelete: 'CASCADE' })
+    @Index()
     sender: User;
 
-    @ManyToOne(() => User)
+    @ManyToOne(() => User, { onDelete: 'CASCADE' })
+    @Index()
     receiver: User;
 
     @Column({

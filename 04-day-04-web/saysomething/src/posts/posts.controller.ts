@@ -9,6 +9,7 @@ import { PostByUserResponseDto } from './dto/post-by-user-response.dto';
 import { ApiBadRequestResponse, ApiBody, ApiCreatedResponse, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { CreatePostDto } from './dto/create-post.dto';
 import { LikePostDto } from './dto/like-post.dto';
+
 @Controller('posts')
 export class PostsController {
     constructor(private readonly postService: PostsService) { }

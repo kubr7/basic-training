@@ -16,24 +16,24 @@ export class FriendsService {
         private dataSource: DataSource,
     ) { }
 
+    private async findUserByUsername(username: string, withFriends = false): Promise<User> {
+        const user = await this.userRepository.findOne({
+            where: { username },
+            relations: withFriends ? ['friends'] : [],
+        });
+        if (!user) throw new NotFoundException(`User '${username}' not found`);
+        return user;
+    }
+
     async sendFriendRequest(senderUsername: string, receiverUsername: string) {
         if (senderUsername === receiverUsername) {
             throw new BadRequestException('You cannot send a friend request to yourself');
         }
 
-        const sender = await this.userRepository.findOne({
-            where: { username: senderUsername },
-            relations: ['friends'],
-        });
+        const sender = await this.findUserByUsername(senderUsername, true);
+        const receiver = await this.findUserByUsername(receiverUsername);
 
-        const receiver = await this.userRepository.findOneBy({ username: receiverUsername });
-
-        if (!sender || !receiver) {
-            throw new NotFoundException('Sender or receiver not found');
-        }
-
-        const alreadyFriends = sender.friends.some(friend => friend.id === receiver.id);
-        if (alreadyFriends) {
+        if (sender.friends.some(f => f.id === receiver.id)) {
             throw new ConflictException('You are already friends');
         }
 
@@ -52,7 +52,6 @@ export class FriendsService {
         const friendRequest = this.friendRequestRepository.create({
             sender,
             receiver,
-            status: FriendRequestStatus.PENDING,
         });
 
         await this.friendRequestRepository.save(friendRequest);
@@ -64,19 +63,10 @@ export class FriendsService {
     }
 
     async acceptFriendRequest(senderUsername: string, receiverUsername: string) {
-        const sender = await this.userRepository.findOne({
-            where: { username: senderUsername },
-            relations: ['friends'],
-        });
-
-        const receiver = await this.userRepository.findOne({
-            where: { username: receiverUsername },
-            relations: ['friends'],
-        });
-
-        if (!sender || !receiver) {
-            throw new NotFoundException('Sender or receiver not found');
-        }
+        const [sender, receiver] = await Promise.all([
+            this.findUserByUsername(senderUsername, true),
+            this.findUserByUsername(receiverUsername, true),
+        ]);
 
         const request = await this.friendRequestRepository.findOne({
             where: {
@@ -84,7 +74,6 @@ export class FriendsService {
                 receiver: { id: receiver.id },
                 status: FriendRequestStatus.PENDING,
             },
-            relations: ['sender', 'receiver'],
         });
 
         if (!request) {
@@ -121,12 +110,10 @@ export class FriendsService {
     }
 
     async rejectFriendRequest(senderUsername: string, receiverUsername: string) {
-        const sender = await this.userRepository.findOneBy({ username: senderUsername });
-        const receiver = await this.userRepository.findOneBy({ username: receiverUsername });
-
-        if (!sender || !receiver) {
-            throw new NotFoundException('Sender or receiver not found');
-        }
+        const [sender, receiver] = await Promise.all([
+            this.findUserByUsername(senderUsername),
+            this.findUserByUsername(receiverUsername),
+        ]);
 
         const request = await this.friendRequestRepository.findOne({
             where: {
@@ -150,11 +137,7 @@ export class FriendsService {
     }
 
     async getFriendRequests(username: string) {
-        const user = await this.userRepository.findOneBy({ username });
-
-        if (!user) {
-            throw new NotFoundException('User not found');
-        }
+        const user = await this.findUserByUsername(username);
 
         const requests = await this.friendRequestRepository.find({
             where: {
@@ -165,28 +148,11 @@ export class FriendsService {
             order: { createdAt: 'DESC' },
         });
 
-        if (!requests || requests.length === 0) {
-            throw new NotFoundException('No friend requests found');
-        }
-
         return requests.map(request => `${request.sender.firstName} ${request.sender.lastName}`);
     }
 
     async getFriends(username: string): Promise<string[]> {
-        const user = await this.userRepository.findOne({
-            where: { username },
-            relations: ['friends'],
-        });
-
-        if (!user) {
-            throw new NotFoundException('User not found');
-        }
-
-        if (!user.friends || user.friends.length === 0) {
-            throw new NotFoundException('No friends found for this user');
-        }
-        
+        const user = await this.findUserByUsername(username, true);
         return user.friends.map(friend => `${friend.firstName} ${friend.lastName}`);
-
     }
 }
