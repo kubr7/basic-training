@@ -37,7 +37,10 @@ contract RPSGameContract {
 
     modifier onlyPlayer(uint gameId) {
         GameStruct storage game = games[gameId];
-        require(msg.sender == game.player1 || msg.sender == game.player2, "Not a player");
+        require(
+            msg.sender == game.player1 || msg.sender == game.player2,
+            "Not a player"
+        );
         _;
     }
 
@@ -58,7 +61,9 @@ contract RPSGameContract {
 
     modifier validMove(Move choice) {
         require(
-            choice == Move.Rock || choice == Move.Paper || choice == Move.Scissors,
+            choice == Move.Rock ||
+                choice == Move.Paper ||
+                choice == Move.Scissors,
             "Invalid move"
         );
         _;
@@ -98,16 +103,18 @@ contract RPSGameContract {
         emit GameCreated(gameId, msg.sender, opponent);
     }
 
-    function joinGame(uint gameId) external onlyPlayer2(gameId) validState(gameId, State.Created) {
+    function joinGame(
+        uint gameId
+    ) external onlyPlayer2(gameId) validState(gameId, State.Created) {
         games[gameId].state = State.Joined;
         emit GameJoined(gameId, msg.sender);
     }
 
-    function commitMove(uint gameId, Move choice, string memory salt) 
-        external 
-        onlyPlayer(gameId)
-        validMove(choice)
-    {
+    function commitMove(
+        uint gameId,
+        Move choice,
+        string memory salt
+    ) external onlyPlayer(gameId) validMove(choice) {
         GameStruct storage game = games[gameId];
         require(
             game.state == State.Joined || game.state == State.Committed,
@@ -130,11 +137,11 @@ contract RPSGameContract {
         emit MoveCommitted(gameId, msg.sender);
     }
 
-    function revealMove(uint gameId, Move choice, string memory salt) 
-        external 
-        onlyPlayer(gameId)
-        validMove(choice)
-    {
+    function revealMove(
+        uint gameId,
+        Move choice,
+        string memory salt
+    ) external onlyPlayer(gameId) validMove(choice) {
         GameStruct storage game = games[gameId];
         require(
             game.state == State.Committed || game.state == State.Revealed,
@@ -164,7 +171,9 @@ contract RPSGameContract {
         emit MoveRevealed(gameId, msg.sender, choice);
     }
 
-    function determineWinner(uint gameId) internal view returns (string memory) {
+    function determineWinner(
+        uint gameId
+    ) internal view returns (string memory) {
         GameStruct storage game = games[gameId];
         if (game.move1 == game.move2) {
             return "Draw";
