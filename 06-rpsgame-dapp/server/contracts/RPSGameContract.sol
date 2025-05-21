@@ -16,7 +16,7 @@ contract RPSGameContract {
         Completed
     }
 
-    struct Game {
+    struct GameStruct {
         address player1;
         address player2;
         bytes32 commit1;
@@ -27,7 +27,7 @@ contract RPSGameContract {
     }
 
     uint public gameCount;
-    mapping(uint => Game) public games;
+    mapping(uint => GameStruct) public games;
 
     event GameCreated(uint gameId, address player1, address player2);
     event GameJoined(uint gameId, address player2);
@@ -35,9 +35,58 @@ contract RPSGameContract {
     event MoveRevealed(uint gameId, address player, Move move);
     event GameCompleted(uint gameId, string result);
 
+    modifier onlyPlayer(uint gameId) {
+        GameStruct storage game = games[gameId];
+        require(msg.sender == game.player1 || msg.sender == game.player2, "Not a player");
+        _;
+    }
+
+    modifier onlyPlayer1(uint gameId) {
+        require(msg.sender == games[gameId].player1, "Not player 1");
+        _;
+    }
+
+    modifier onlyPlayer2(uint gameId) {
+        require(msg.sender == games[gameId].player2, "Not player 2");
+        _;
+    }
+
+    modifier validState(uint gameId, State requiredState) {
+        require(games[gameId].state == requiredState, "Invalid state");
+        _;
+    }
+
+    modifier validMove(Move choice) {
+        require(
+            choice == Move.Rock || choice == Move.Paper || choice == Move.Scissors,
+            "Invalid move"
+        );
+        _;
+    }
+
+    modifier notCommitted(uint gameId, bool isPlayer1) {
+        GameStruct storage game = games[gameId];
+        if (isPlayer1) {
+            require(game.commit1 == "", "Already committed");
+        } else {
+            require(game.commit2 == "", "Already committed");
+        }
+        _;
+    }
+
+    modifier notRevealed(uint gameId, bool isPlayer1) {
+        GameStruct storage game = games[gameId];
+        if (isPlayer1) {
+            require(game.move1 == Move.None, "Already revealed");
+        } else {
+            require(game.move2 == Move.None, "Already revealed");
+        }
+        _;
+    }
+
     function createGame(address opponent) external returns (uint gameId) {
         gameId = ++gameCount;
-        games[gameId] = Game(
+        games[gameId] = GameStruct(
             msg.sender,
             opponent,
             "",
@@ -49,37 +98,29 @@ contract RPSGameContract {
         emit GameCreated(gameId, msg.sender, opponent);
     }
 
-    function joinGame(uint gameId) external {
-        Game storage game = games[gameId];
-        require(msg.sender == game.player2, "Not invited");
-        require(game.state == State.Created, "Invalid state");
-
-        game.state = State.Joined;
+    function joinGame(uint gameId) external onlyPlayer2(gameId) validState(gameId, State.Created) {
+        games[gameId].state = State.Joined;
         emit GameJoined(gameId, msg.sender);
     }
 
-    function commitMove(uint gameId, Move choice, string memory salt) external {
-        Game storage game = games[gameId];
+    function commitMove(uint gameId, Move choice, string memory salt) 
+        external 
+        onlyPlayer(gameId)
+        validMove(choice)
+    {
+        GameStruct storage game = games[gameId];
         require(
             game.state == State.Joined || game.state == State.Committed,
             "Invalid state"
-        );
-        require(
-            choice == Move.Rock ||
-                choice == Move.Paper ||
-                choice == Move.Scissors,
-            "Invalid move"
         );
 
         bytes32 commitHash = keccak256(abi.encodePacked(choice, salt));
         if (msg.sender == game.player1) {
             require(game.commit1 == "", "Already committed");
             game.commit1 = commitHash;
-        } else if (msg.sender == game.player2) {
+        } else {
             require(game.commit2 == "", "Already committed");
             game.commit2 = commitHash;
-        } else {
-            revert("Not a player");
         }
 
         if (game.commit1 != "" && game.commit2 != "") {
@@ -89,17 +130,15 @@ contract RPSGameContract {
         emit MoveCommitted(gameId, msg.sender);
     }
 
-    function revealMove(uint gameId, Move choice, string memory salt) external {
-        Game storage game = games[gameId];
+    function revealMove(uint gameId, Move choice, string memory salt) 
+        external 
+        onlyPlayer(gameId)
+        validMove(choice)
+    {
+        GameStruct storage game = games[gameId];
         require(
             game.state == State.Committed || game.state == State.Revealed,
             "Invalid state"
-        );
-        require(
-            choice == Move.Rock ||
-                choice == Move.Paper ||
-                choice == Move.Scissors,
-            "Invalid move"
         );
 
         bytes32 hash = keccak256(abi.encodePacked(choice, salt));
@@ -108,12 +147,10 @@ contract RPSGameContract {
             require(game.move1 == Move.None, "Already revealed");
             require(hash == game.commit1, "Hash mismatch");
             game.move1 = choice;
-        } else if (msg.sender == game.player2) {
+        } else {
             require(game.move2 == Move.None, "Already revealed");
             require(hash == game.commit2, "Hash mismatch");
             game.move2 = choice;
-        } else {
-            revert("Not a player");
         }
 
         if (game.move1 != Move.None && game.move2 != Move.None) {
@@ -127,10 +164,8 @@ contract RPSGameContract {
         emit MoveRevealed(gameId, msg.sender, choice);
     }
 
-    function determineWinner(
-        uint gameId
-    ) internal view returns (string memory) {
-        Game storage game = games[gameId];
+    function determineWinner(uint gameId) internal view returns (string memory) {
+        GameStruct storage game = games[gameId];
         if (game.move1 == game.move2) {
             return "Draw";
         } else if (
