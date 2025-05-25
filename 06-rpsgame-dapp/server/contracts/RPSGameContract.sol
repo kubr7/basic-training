@@ -1,190 +1,131 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-contract RPSGameContract {
-    enum Move {
-        None,
-        Rock,
-        Paper,
-        Scissors
-    }
-    enum State {
+contract RockPaperScissors {
+    enum Move { None, Rock, Paper, Scissors }
+    enum GameStatus {
         Created,
-        Joined,
-        Committed,
-        Revealed,
+        Player1Committed,
+        Player2Committed,
+        Player1Revealed,
+        Player2Revealed,
         Completed
     }
 
-    struct GameStruct {
+    struct Game {
         address player1;
         address player2;
         bytes32 commit1;
         bytes32 commit2;
         Move move1;
         Move move2;
-        State state;
+        address winner;
+        GameStatus status;
     }
 
-    uint public gameCount;
-    mapping(uint => GameStruct) public games;
+    uint256 public gameCounter;
+    mapping(uint256 => Game) public games;
+    mapping(address => uint256[]) public playerGames;
 
-    event GameCreated(uint gameId, address player1, address player2);
-    event GameJoined(uint gameId, address player2);
-    event MoveCommitted(uint gameId, address player);
-    event MoveRevealed(uint gameId, address player, Move move);
-    event GameCompleted(uint gameId, string result);
+    event GameCreated(uint256 indexed gameId, address indexed player1, address indexed player2);
+    event PlayerCommitted(uint256 indexed gameId, address indexed player);
+    event PlayerRevealed(uint256 indexed gameId, address indexed player, Move move);
+    event GameCompleted(uint256 indexed gameId, address winner, Move move1, Move move2);
 
-    modifier onlyPlayer(uint gameId) {
-        GameStruct storage game = games[gameId];
-        require(
-            msg.sender == game.player1 || msg.sender == game.player2,
-            "Not a player"
-        );
+    modifier onlyPlayer(uint256 gameId) {
+        Game storage g = games[gameId];
+        require(msg.sender == g.player1 || msg.sender == g.player2, "Not a player");
         _;
     }
 
-    modifier onlyPlayer1(uint gameId) {
-        require(msg.sender == games[gameId].player1, "Not player 1");
-        _;
-    }
+    function createGame(address opponent, Move move, string calldata salt) external returns (uint256) {
+        require(opponent != msg.sender, "Cannot play against self");
+        require(_isValidMove(move), "Invalid move");
 
-    modifier onlyPlayer2(uint gameId) {
-        require(msg.sender == games[gameId].player2, "Not player 2");
-        _;
-    }
+        gameCounter++;
+        uint256 gameId = gameCounter;
 
-    modifier validState(uint gameId, State requiredState) {
-        require(games[gameId].state == requiredState, "Invalid state");
-        _;
-    }
+        Game storage g = games[gameId];
+        g.player1 = msg.sender;
+        g.player2 = opponent;
+        g.commit1 = keccak256(abi.encodePacked(move, salt));
+        g.status = GameStatus.Player1Committed;
 
-    modifier validMove(Move choice) {
-        require(
-            choice == Move.Rock ||
-                choice == Move.Paper ||
-                choice == Move.Scissors,
-            "Invalid move"
-        );
-        _;
-    }
+        playerGames[msg.sender].push(gameId);
+        playerGames[opponent].push(gameId);
 
-    modifier notCommitted(uint gameId, bool isPlayer1) {
-        GameStruct storage game = games[gameId];
-        if (isPlayer1) {
-            require(game.commit1 == "", "Already committed");
-        } else {
-            require(game.commit2 == "", "Already committed");
-        }
-        _;
-    }
-
-    modifier notRevealed(uint gameId, bool isPlayer1) {
-        GameStruct storage game = games[gameId];
-        if (isPlayer1) {
-            require(game.move1 == Move.None, "Already revealed");
-        } else {
-            require(game.move2 == Move.None, "Already revealed");
-        }
-        _;
-    }
-
-    function createGame(address opponent) external returns (uint gameId) {
-        gameId = ++gameCount;
-        games[gameId] = GameStruct(
-            msg.sender,
-            opponent,
-            "",
-            "",
-            Move.None,
-            Move.None,
-            State.Created
-        );
         emit GameCreated(gameId, msg.sender, opponent);
+        emit PlayerCommitted(gameId, msg.sender);
+        return gameId;
     }
 
-    function joinGame(
-        uint gameId
-    ) external onlyPlayer2(gameId) validState(gameId, State.Created) {
-        games[gameId].state = State.Joined;
-        emit GameJoined(gameId, msg.sender);
+    function joinAndCommit(uint256 gameId, Move move, string calldata salt) external {
+        Game storage g = games[gameId];
+        require(g.status == GameStatus.Player1Committed, "Game not joinable");
+        require(msg.sender == g.player2, "Only opponent can join");
+        require(_isValidMove(move), "Invalid move");
+
+        g.commit2 = keccak256(abi.encodePacked(move, salt));
+        g.status = GameStatus.Player2Committed;
+
+        emit PlayerCommitted(gameId, msg.sender);
     }
 
-    function commitMove(
-        uint gameId,
-        Move choice,
-        string memory salt
-    ) external onlyPlayer(gameId) validMove(choice) {
-        GameStruct storage game = games[gameId];
-        require(
-            game.state == State.Joined || game.state == State.Committed,
-            "Invalid state"
-        );
+    function revealMove(uint256 gameId, Move move, string calldata salt) external onlyPlayer(gameId) {
+        require(_isValidMove(move), "Invalid move");
+        Game storage g = games[gameId];
+        bytes32 hash = keccak256(abi.encodePacked(move, salt));
 
-        bytes32 commitHash = keccak256(abi.encodePacked(choice, salt));
-        if (msg.sender == game.player1) {
-            require(game.commit1 == "", "Already committed");
-            game.commit1 = commitHash;
+        if (msg.sender == g.player1) {
+            require(g.move1 == Move.None, "Already revealed");
+            require(hash == g.commit1, "Invalid reveal");
+            g.move1 = move;
+            g.status = (g.status == GameStatus.Player2Revealed)
+                ? GameStatus.Completed
+                : GameStatus.Player1Revealed;
         } else {
-            require(game.commit2 == "", "Already committed");
-            game.commit2 = commitHash;
+            require(g.move2 == Move.None, "Already revealed");
+            require(hash == g.commit2, "Invalid reveal");
+            g.move2 = move;
+            g.status = (g.status == GameStatus.Player1Revealed)
+                ? GameStatus.Completed
+                : GameStatus.Player2Revealed;
         }
 
-        if (game.commit1 != "" && game.commit2 != "") {
-            game.state = State.Committed;
-        }
+        emit PlayerRevealed(gameId, msg.sender, move);
 
-        emit MoveCommitted(gameId, msg.sender);
+        if (g.status == GameStatus.Completed) {
+            _resolveGame(gameId);
+        }
     }
 
-    function revealMove(
-        uint gameId,
-        Move choice,
-        string memory salt
-    ) external onlyPlayer(gameId) validMove(choice) {
-        GameStruct storage game = games[gameId];
-        require(
-            game.state == State.Committed || game.state == State.Revealed,
-            "Invalid state"
-        );
+    function _resolveGame(uint256 gameId) internal {
+        Game storage g = games[gameId];
 
-        bytes32 hash = keccak256(abi.encodePacked(choice, salt));
-
-        if (msg.sender == game.player1) {
-            require(game.move1 == Move.None, "Already revealed");
-            require(hash == game.commit1, "Hash mismatch");
-            game.move1 = choice;
-        } else {
-            require(game.move2 == Move.None, "Already revealed");
-            require(hash == game.commit2, "Hash mismatch");
-            game.move2 = choice;
-        }
-
-        if (game.move1 != Move.None && game.move2 != Move.None) {
-            game.state = State.Completed;
-            string memory result = determineWinner(gameId);
-            emit GameCompleted(gameId, result);
-        } else {
-            game.state = State.Revealed;
-        }
-
-        emit MoveRevealed(gameId, msg.sender, choice);
-    }
-
-    function determineWinner(
-        uint gameId
-    ) internal view returns (string memory) {
-        GameStruct storage game = games[gameId];
-        if (game.move1 == game.move2) {
-            return "Draw";
+        if (g.move1 == g.move2) {
+            g.winner = address(0); // Draw
         } else if (
-            (game.move1 == Move.Rock && game.move2 == Move.Scissors) ||
-            (game.move1 == Move.Paper && game.move2 == Move.Rock) ||
-            (game.move1 == Move.Scissors && game.move2 == Move.Paper)
+            (g.move1 == Move.Rock && g.move2 == Move.Scissors) ||
+            (g.move1 == Move.Paper && g.move2 == Move.Rock) ||
+            (g.move1 == Move.Scissors && g.move2 == Move.Paper)
         ) {
-            return "Player 1 wins";
+            g.winner = g.player1;
         } else {
-            return "Player 2 wins";
+            g.winner = g.player2;
         }
+
+        emit GameCompleted(gameId, g.winner, g.move1, g.move2);
+    }
+
+    function _isValidMove(Move move) private pure returns (bool) {
+        return move == Move.Rock || move == Move.Paper || move == Move.Scissors;
+    }
+
+    function getPlayerGames(address player) external view returns (uint256[] memory) {
+        return playerGames[player];
+    }
+
+    function getGame(uint256 gameId) external view returns (Game memory) {
+        return games[gameId];
     }
 }
