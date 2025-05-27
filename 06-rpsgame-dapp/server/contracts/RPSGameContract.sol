@@ -31,6 +31,7 @@ contract RockPaperScissors {
     event PlayerCommitted(uint256 indexed gameId, address indexed player);
     event PlayerRevealed(uint256 indexed gameId, address indexed player, Move move);
     event GameCompleted(uint256 indexed gameId, address winner, Move move1, Move move2);
+    event GameReset(uint256 indexed gameId, address player1, address player2);
 
     modifier onlyPlayer(uint256 gameId) {
         Game storage g = games[gameId];
@@ -104,6 +105,14 @@ contract RockPaperScissors {
 
         if (g.move1 == g.move2) {
             g.winner = address(0); // Draw
+            // Reset the game state
+            g.commit1 = bytes32(0);
+            g.commit2 = bytes32(0);
+            g.move1 = Move.None;
+            g.move2 = Move.None;
+            g.status = GameStatus.Created;
+            
+            emit GameReset(gameId, g.player1, g.player2);
         } else if (
             (g.move1 == Move.Rock && g.move2 == Move.Scissors) ||
             (g.move1 == Move.Paper && g.move2 == Move.Rock) ||

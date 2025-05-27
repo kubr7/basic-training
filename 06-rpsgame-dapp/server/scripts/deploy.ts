@@ -5,7 +5,7 @@ const main = async (): Promise<void> => {
     await run("compile"); // Compile the contract
     console.log("Deploying contract...");
 
-    const ContractFactory = await ethers.getContractFactory("RPSGameContract");
+    const ContractFactory = await ethers.getContractFactory("RockPaperScissors");
     const contract = await ContractFactory.deploy();
 
     await contract.waitForDeployment();
