@@ -3,11 +3,13 @@ import { getGame, getGameCount, Move, Game, GameStatus, initContract } from '../
 
 const styles = {
   gameCard: {
-    backgroundColor: '#2c313c',
+    backgroundColor: '#041C32',
     padding: '1rem',
     borderRadius: '8px',
     marginBottom: '1rem',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+    border: '1px solid #064663',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
   },
   gameHeader: {
     display: 'flex',
@@ -18,56 +20,61 @@ const styles = {
   gameId: {
     fontSize: '1.2rem',
     fontWeight: 'bold',
-    color: '#61dafb',
+    color: '#ECB365',
   },
   gameStatus: {
     padding: '0.25rem 0.5rem',
     borderRadius: '4px',
     fontSize: '0.9rem',
   },
+  gameHost: {
+    fontSize: '0.9rem',
+    color: '#ECB365',
+  },
   playerInfo: {
     marginTop: '0.5rem',
     padding: '0.5rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: '#04293A',
     borderRadius: '4px',
   },
   address: {
     wordBreak: 'break-all' as const,
     fontSize: '0.9rem',
-    color: '#ffffff',
+    color: '#ECB365',
   },
   winner: {
     marginTop: '0.5rem',
     padding: '0.5rem',
-    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+    backgroundColor: '#04293A',
     borderRadius: '4px',
-    border: '1px solid rgba(0, 255, 136, 0.2)',
+    border: '1px solid #064663',
   },
   moves: {
     marginTop: '0.5rem',
     display: 'flex',
     gap: '1rem',
+    justifyContent: 'space-between',
   },
   move: {
     padding: '0.25rem 0.5rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#04293A',
     borderRadius: '4px',
+    color: '#ECB365',
   },
   loading: {
     textAlign: 'center' as const,
     padding: '2rem',
-    color: '#61dafb',
+    color: '#ECB365',
   },
   error: {
-    color: '#ff6b6b',
+    color: '#ECB365',
     textAlign: 'center' as const,
     padding: '1rem',
   },
   refreshButton: {
-    marginBottom: '1rem',
     padding: '0.5rem 1rem',
-    backgroundColor: '#4CAF50',
-    color: 'white',
+    backgroundColor: '#064663',
+    color: '#ECB365',
     border: 'none',
     borderRadius: '4px',
     cursor: 'pointer',
@@ -77,15 +84,15 @@ const styles = {
 const getStatusStyle = (status: GameStatus) => {
   switch (status) {
     case GameStatus.Created:
-      return { ...styles.gameStatus, backgroundColor: '#ffd700', color: '#000000' };
+      return { ...styles.gameStatus, backgroundColor: '#04293A', color: '#ECB365' };
     case GameStatus.Player1Committed:
-      return { ...styles.gameStatus, backgroundColor: '#ffa500', color: '#000000' };
+      return { ...styles.gameStatus, backgroundColor: '#064663', color: '#ECB365' };
     case GameStatus.Player2Committed:
-      return { ...styles.gameStatus, backgroundColor: '#ff8c00', color: '#000000' };
+      return { ...styles.gameStatus, backgroundColor: '#064663', color: '#ECB365' };
     case GameStatus.Completed:
-      return { ...styles.gameStatus, backgroundColor: '#4CAF50', color: '#ffffff' };
+      return { ...styles.gameStatus, backgroundColor: '#04293A', color: '#ECB365' };
     default:
-      return { ...styles.gameStatus, backgroundColor: '#666666', color: '#ffffff' };
+      return { ...styles.gameStatus, backgroundColor: '#041C32', color: '#ECB365' };
   }
 };
 
@@ -142,15 +149,21 @@ const AllGamesPage = () => {
 
   return (
     <div className="page-container">
-      <h2>All Games</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <h1>All Games</h1>
       <button onClick={fetchAllGames} style={styles.refreshButton}>
         Refresh Games
       </button>
+      </div>
       <div className="games-list">
         {games.map(({ id, game }) => (
           <div key={id} style={styles.gameCard}>
             <div style={styles.gameHeader}>
               <span style={styles.gameId}>Game #{id}</span>
+              <span style={styles.gameHost}>Host : <span style={styles.address}>{game.player1}</span></span>
+            </div>
+            <div style={styles.gameHeader}>
+              <span style={styles.gameId}>Status code:{game.status}</span>
               <span style={getStatusStyle(game.status)}>
                 {getStatusText(game.status)}
               </span>

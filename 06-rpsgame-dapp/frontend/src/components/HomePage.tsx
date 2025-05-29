@@ -91,8 +91,8 @@ const HomePage = () => {
         </button>
       ) : (
         <div className="welcome-message">
-          <p>Welcome! Your wallet is connected: {walletAddress}</p>
-          <p>Use the navigation above to create or join a game!</p>
+          <h2>Welcome!</h2>
+          <p>Your wallet is connected: {walletAddress}</p>
         </div>
       )}
     </div>
