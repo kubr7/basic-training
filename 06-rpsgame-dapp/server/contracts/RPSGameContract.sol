@@ -4,23 +4,21 @@ pragma solidity ^0.8.20;
 contract RockPaperScissors {
     enum Move { None, Rock, Paper, Scissors }
     enum GameStatus {
-        Created,
-        Player1Committed,
-        Player2Committed,
-        Player1Revealed,
-        Player2Revealed,
-        Completed
+        Created,        // Initial state
+        Player1Committed, // After P1 commits their move
+        Player2Committed, // After P2 commits their move
+        Completed      // After both players reveal
     }
 
     struct Game {
-        address player1;
-        address player2;
-        bytes32 commit1;
-        bytes32 commit2;
-        Move move1;
-        Move move2;
-        address winner;
-        GameStatus status;
+        address player1;    // 20 bytes
+        address player2;    // 20 bytes
+        bytes32 commit1;    // 32 bytes - hash of P1's move + salt
+        bytes32 commit2;    // 32 bytes - hash of P2's move + salt
+        Move move1;        // 1 byte - P1's revealed move
+        Move move2;        // 1 byte - P2's revealed move
+        address winner;    // 20 bytes - winner address (0x0 for draw)
+        GameStatus status; // 1 byte - current game state
     }
 
     uint256 public gameCounter;
@@ -81,21 +79,17 @@ contract RockPaperScissors {
             require(g.move1 == Move.None, "Already revealed");
             require(hash == g.commit1, "Invalid reveal");
             g.move1 = move;
-            g.status = (g.status == GameStatus.Player2Revealed)
-                ? GameStatus.Completed
-                : GameStatus.Player1Revealed;
         } else {
             require(g.move2 == Move.None, "Already revealed");
             require(hash == g.commit2, "Invalid reveal");
             g.move2 = move;
-            g.status = (g.status == GameStatus.Player1Revealed)
-                ? GameStatus.Completed
-                : GameStatus.Player2Revealed;
         }
 
         emit PlayerRevealed(gameId, msg.sender, move);
 
-        if (g.status == GameStatus.Completed) {
+        // Game completes when both moves are revealed
+        if (g.move1 != Move.None && g.move2 != Move.None) {
+            g.status = GameStatus.Completed;
             _resolveGame(gameId);
         }
     }
@@ -104,6 +98,10 @@ contract RockPaperScissors {
         Game storage g = games[gameId];
 
         if (g.move1 == g.move2) {
+            // Store moves before resetting
+            Move originalMove1 = g.move1;
+            Move originalMove2 = g.move2;
+            
             g.winner = address(0); // Draw
             // Reset the game state
             g.commit1 = bytes32(0);
@@ -113,17 +111,19 @@ contract RockPaperScissors {
             g.status = GameStatus.Created;
             
             emit GameReset(gameId, g.player1, g.player2);
+            // Emit GameCompleted with the original moves
+            emit GameCompleted(gameId, address(0), originalMove1, originalMove2);
         } else if (
             (g.move1 == Move.Rock && g.move2 == Move.Scissors) ||
             (g.move1 == Move.Paper && g.move2 == Move.Rock) ||
             (g.move1 == Move.Scissors && g.move2 == Move.Paper)
         ) {
             g.winner = g.player1;
+            emit GameCompleted(gameId, g.winner, g.move1, g.move2);
         } else {
             g.winner = g.player2;
+            emit GameCompleted(gameId, g.winner, g.move1, g.move2);
         }
-
-        emit GameCompleted(gameId, g.winner, g.move1, g.move2);
     }
 
     function _isValidMove(Move move) private pure returns (bool) {

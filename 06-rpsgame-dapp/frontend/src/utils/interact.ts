@@ -20,9 +20,7 @@ export enum GameStatus {
   Created = 0,
   Player1Committed = 1,
   Player2Committed = 2,
-  Player1Revealed = 3,
-  Player2Revealed = 4,
-  Completed = 5
+  Completed = 3
 }
 
 export interface Game {
@@ -83,8 +81,10 @@ export const createGame = async (opponentAddress: string, move: Move, salt: stri
   try {
     const tx = await contract.createGame(opponentAddress, move, salt);
     const receipt = await tx.wait();
-    const event = receipt.logs[0];
-    const gameId = event.args[0];
+    const event = receipt.logs?.find((log: { fragment?: { name: string }, args?: { gameId: bigint } }) => log?.fragment?.name === "GameCreated");
+    if (!event) throw new Error("GameCreated event not found");
+    const gameId = event.args.gameId;
+    console.log("Game created with ID:", gameId);
     return Number(gameId);
   } catch (error: any) {
     throw new Error(error.message || 'Error creating game');
@@ -157,6 +157,18 @@ export const getGameCount = async (): Promise<number> => {
     return Number(count);
   } catch (error: any) {
     throw new Error(error.message || 'Error getting game count');
+  }
+};
+
+export const resolveGame = async (gameId: number): Promise<void> => {
+  if (!contract) {
+    throw new Error('Contract not initialized');
+  }
+  try {
+    const tx = await contract.resolveGame(gameId);
+    await tx.wait();
+  } catch (error: any) {
+    throw new Error(error.message || 'Error resolving game');
   }
 };
 
