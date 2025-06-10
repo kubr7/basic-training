@@ -19,7 +19,7 @@ contract RockPaperScissors {
         bytes32 commit1;    // 32 bytes - hash of P1's move + salt (slot 2)
         bytes32 commit2;    // 32 bytes - hash of P2's move + salt (slot 3)
         Move move1;        // 1 byte - P1's revealed move
-        Move move2;        // 1 byte - P2's revealed move  
+        Move move2;        // 1 byte - P2's revealed move
         GameStatus status; // 1 byte - current game state
         uint8 roundNumber; // 1 byte - tracks rounds in case of draws (remaining 28 bytes in slot 4)
     }
