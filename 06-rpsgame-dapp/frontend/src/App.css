@@ -32,6 +32,12 @@ h1 {
   text-shadow: 0 0 10px rgba(236, 179, 101, 0.3);
 }
 
+p {
+  margin: 0;
+  padding: 0;
+  font-size: 0.8rem;
+}
+
 .connect-button {
   background: #064663;
   border: none;
@@ -416,7 +422,7 @@ button:disabled {
 }
 
 .page-container {
-  max-width: 800px;
+  max-width: 100%;
   margin: 0 auto;
 }
 

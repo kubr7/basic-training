@@ -16,6 +16,7 @@ const styles = {
   navigation: {
     display: 'flex',
     flexWrap: 'wrap' as const,
+    justifyContent: 'center',
     gap: '1rem',
   },
   navLink: {

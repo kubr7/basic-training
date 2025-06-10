@@ -164,8 +164,8 @@ const JoinGamePage = () => {
       const games = await Promise.all(
         gameIds.map(async (id) => {
           try {
-            const game = await getGame(id);
-            return { id, game };
+          const game = await getGame(id);
+          return { id, game };
           } catch (error) {
             console.error(`Error fetching game ${id}:`, error);
             return null;
@@ -344,29 +344,29 @@ const JoinGamePage = () => {
       <div style={styles.joinSection}>
         <h3>Join by Game ID</h3>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
-          <input
+        <input
             style={styles.input}
-            type="text"
-            placeholder="Enter game ID"
-            value={gameIdInput}
-            onChange={(e) => setGameIdInput(e.target.value)}
-          />
-          <input
+          type="text"
+          placeholder="Enter game ID"
+          value={gameIdInput}
+          onChange={(e) => setGameIdInput(e.target.value)}
+        />
+        <input
             style={styles.input}
-            type="text"
-            placeholder="Enter salt for your move"
-            value={moveSalt}
-            onChange={(e) => setMoveSalt(e.target.value)}
-          />
-          <select 
+          type="text"
+          placeholder="Enter salt for your move"
+          value={moveSalt}
+          onChange={(e) => setMoveSalt(e.target.value)}
+        />
+        <select 
             style={styles.select}
-            value={selectedMove} 
-            onChange={(e) => setSelectedMove(Number(e.target.value) as Move)}
-          >
+          value={selectedMove} 
+          onChange={(e) => setSelectedMove(Number(e.target.value) as Move)}
+        >
             <option value={Move.Rock}>🗿 Rock</option>
             <option value={Move.Paper}>📄 Paper</option>
             <option value={Move.Scissors}>✂️ Scissors</option>
-          </select>
+        </select>
           <button style={styles.button} onClick={handleJoinGameById}>
             Join Game
           </button>
@@ -472,7 +472,7 @@ const JoinGamePage = () => {
       {completedGames.length > 0 && (
         <>
           <h3>✅ Completed Games ({completedGames.length})</h3>
-          <div className="games-list">
+        <div className="games-list">
             {completedGames.map(({ id, game }) => {
               const gameState = getGameStateMessage(game);
               return (
@@ -498,7 +498,7 @@ const JoinGamePage = () => {
                 </div>
               );
             })}
-          </div>
+            </div>
         </>
       )}
 

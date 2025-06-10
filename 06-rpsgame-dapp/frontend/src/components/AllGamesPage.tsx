@@ -174,8 +174,8 @@ const AllGamesPage = () => {
       const count = await getGameCount();
       const gamePromises = Array.from({ length: count }, (_, i) => i + 1).map(async (id) => {
         try {
-          const game = await getGame(id);
-          return { id, game };
+        const game = await getGame(id);
+        return { id, game };
         } catch (error) {
           console.error(`Error fetching game ${id}:`, error);
           return null;
@@ -294,10 +294,10 @@ const AllGamesPage = () => {
   return (
     <div className="page-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>All Games</h1>
-        <button onClick={fetchAllGames} style={styles.refreshButton}>
+      <h1>All Games</h1>
+      <button onClick={fetchAllGames} style={styles.refreshButton}>
           🔄 Refresh Games
-        </button>
+      </button>
       </div>
       
       {currentUser && (
@@ -313,23 +313,23 @@ const AllGamesPage = () => {
           const revealStatus = getRevealStatus(game);
 
           return (
-            <div key={id} style={styles.gameCard}>
-              <div style={styles.gameHeader}>
+          <div key={id} style={styles.gameCard}>
+            <div style={styles.gameHeader}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <span style={styles.gameId}>Game #{id}</span>
+              <span style={styles.gameId}>Game #{id}</span>
                   <span style={styles.roundInfo}>Round {game.roundNumber}</span>
                 </div>
                 <span style={styles.gameHost}>Host: <span style={styles.address}>{game.player1.slice(0, 8)}...{game.player1.slice(-6)}</span></span>
-              </div>
+            </div>
               
-              <div style={styles.gameHeader}>
+            <div style={styles.gameHeader}>
                 <span style={styles.gameId}>Status: {game.status}</span>
-                <span style={getStatusStyle(game.status)}>
+              <span style={getStatusStyle(game.status)}>
                   {getGameStatusString(game.status)}
-                </span>
-              </div>
+              </span>
+            </div>
               
-              <div style={styles.playerInfo}>
+            <div style={styles.playerInfo}>
                 <p>Player 1: <span style={styles.address}>{game.player1}</span> 
                   {userRole === 'player1' && ' (You)'}
                 </p>
@@ -354,13 +354,13 @@ const AllGamesPage = () => {
               {game.status === GameStatus.Draw && (
                 <div style={styles.drawStatus}>
                   🎯 Game ended in a draw! {userRole === 'player1' ? 'You can start a new round.' : 'Waiting for Player 1 to start new round.'}
-                </div>
+            </div>
               )}
               
               {/* Show moves if both are revealed */}
-              {game.move1 !== Move.None && game.move2 !== Move.None && (
-                <div style={styles.moves}>
-                  <div style={styles.move}>
+            {game.move1 !== Move.None && game.move2 !== Move.None && (
+              <div style={styles.moves}>
+                <div style={styles.move}>
                     Player 1: {getMoveString(game.move1)} 🗿📄✂️
                   </div>
                   <div style={styles.move}>
@@ -384,9 +384,9 @@ const AllGamesPage = () => {
                   {game.status === GameStatus.Draw && (
                     <p>Previous rounds ended in draws</p>
                   )}
-                </div>
-              )}
-            </div>
+              </div>
+            )}
+          </div>
           );
         })}
       </div>

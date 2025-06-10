@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { connectWallet, initContract } from '../utils/interact';
+// import { paste } from '@testing-library/user-event/dist/paste';
 
 const styles = {
   hero: {
+    width: '60%',
+    margin: 'auto',
     textAlign: 'center' as const,
     padding: '3rem 2rem',
     backgroundColor: '#041C32',
@@ -44,6 +47,7 @@ const styles = {
     gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
     gap: '1.5rem',
     marginBottom: '2rem',
+    padding: '1rem',
   },
   featureCard: {
     backgroundColor: '#04293A',
@@ -62,6 +66,8 @@ const styles = {
     lineHeight: '1.6',
   },
   gameFlowSection: {
+    width: '80%',
+    margin: 'auto',
     backgroundColor: '#041C32',
     padding: '2rem',
     borderRadius: '12px',
@@ -107,8 +113,7 @@ const styles = {
   },
   quickStartSection: {
     backgroundColor: '#04293A',
-    padding: '2rem',
-    borderRadius: '12px',
+    padding: '1rem',
     border: '1px solid #064663',
   },
   navigationGrid: {
@@ -141,6 +146,8 @@ const styles = {
     fontSize: '0.9rem',
   },
   stateTransitionSection: {
+    width: '60%',
+    margin: 'auto',
     backgroundColor: '#04293A',
     padding: '2rem',
     borderRadius: '12px',
