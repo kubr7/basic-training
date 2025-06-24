@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+import "./UserTaskCount.sol";
+
 contract TodoContract {
     enum TaskStatus {
-        NotStarted,
-        Started,
         Pending,
         Completed
     }
@@ -23,7 +23,18 @@ contract TodoContract {
     mapping(uint256 => Task) public tasks;
     mapping(address => uint256[]) public userTaskIds;
     mapping(uint32 => uint256[]) public dateTaskIds;
-    mapping(address => uint256) public userTaskCount;
+    // mapping(address => uint256) public userTaskCount;
+    address[] public userList;
+    mapping(address => bool) public userExists;
+
+    UserTaskCount public userTaskCountContract;
+
+    constructor(address _userTaskCountContract) {
+        require(_userTaskCountContract != address(0), "Invalid UserTaskCount address");
+        userTaskCountContract = UserTaskCount(_userTaskCountContract);
+        
+        UserTaskCount(_userTaskCountContract).setTodoContract(address(this));
+    } 
 
     event TaskCreated(
         uint256 indexed taskId,
@@ -39,6 +50,7 @@ contract TodoContract {
         address indexed modifiedBy,
         string oldDescription,
         string newDescription,
+        uint32 oldDate,
         uint32 newDate,
         uint256 timestamp
     );
@@ -52,8 +64,7 @@ contract TodoContract {
     event TaskStatusUpdated(
         uint256 indexed taskId,
         address updatedBy,
-        string oldStatus,
-        string newStatus,
+        string status,
         uint256 timestamp
     );
 
@@ -68,7 +79,7 @@ contract TodoContract {
     }
 
     modifier taskExists(uint256 taskId) {
-        require(taskId > 0 && taskId < taskCount, "Invalid task id.");
+        require(taskId > 0 && taskId <= taskCount, "Invalid task id.");
         require(!tasks[taskId].isDeleted, "Task is deleted, doesn't exist.");
         _;
     }
@@ -80,14 +91,14 @@ contract TodoContract {
             expectedTimestamp >= block.timestamp,
             "Date can not be in past"
         );
-        uint256 taskId = taskCount++;
+        uint256 taskId = ++taskCount;
         Task memory newTask = Task({
             id: taskId,
             creator: msg.sender,
             assignedTo: assignedTo,
             description: description,
             date: date,
-            status: TaskStatus.NotStarted,
+            status: TaskStatus.Pending,
             isDeleted: false,
             isModified: false
         });
@@ -96,22 +107,190 @@ contract TodoContract {
         userTaskIds[msg.sender].push(taskId);
         userTaskIds[assignedTo].push(taskId);
         dateTaskIds[date].push(taskId);
-        userTaskCount[msg.sender]++;
+        // userTaskCount[msg.sender]++;
+
+        if (!userExists[msg.sender]) {
+            userExists[msg.sender] = true;
+            userList.push(msg.sender);
+        }
+
+        if (!userExists[assignedTo]) {
+            userExists[assignedTo] = true;
+            userList.push(assignedTo);
+        }
+
+        userTaskCountContract.updateMapping(assignedTo);
 
         emit TaskCreated(
             taskId,
             msg.sender,
             assignedTo,
             date,
-            TaskStatus.NotStarted,
+            TaskStatus.Pending,
             block.timestamp
         );
     }
 
-    function modifyTask(uint256 taskId, string newDescription, uint32 newDate) external taskExists(taskId) onlyCreator(taskId){
+    function modifyTask(uint256 taskId, string calldata newDescription, uint32 newDate) external taskExists(taskId) onlyCreator(taskId){
         Task storage task = tasks[taskId];
         require(task.status != TaskStatus.Completed, "Can not modify completed task");
 
+        removeTaskId(dateTaskIds[task.date], taskId);
+
+        string memory oldTaskDescription = task.description;
+        task.description = newDescription;
+        uint32 oldDate = task.date;
+        task.date = newDate;
+        task.isModified = true;
+
+        dateTaskIds[newDate].push(taskId);
+
+        emit TaskModified(taskId, msg.sender, oldTaskDescription, newDescription, oldDate, newDate, block.timestamp);
+    }
+
+    function deleteTask(uint taskId) external taskExists(taskId) onlyCreator(taskId) {
+        Task storage task = tasks[taskId];
+
+        removeTaskId(userTaskIds[task.assignedTo], taskId);
+        removeTaskId(dateTaskIds[task.date], taskId);
+
+        emit TaskDeleted(taskId, msg.sender, block.timestamp);  
+    }
+
+    function updateTaskStatus(uint256 taskId, TaskStatus newStatus) external taskExists(taskId) onlyAssigned(taskId){
+        Task storage task = tasks[taskId];
+        TaskStatus currentStatus = task.status;
+
+        if (currentStatus == TaskStatus.Completed) {
+            revert("Cannot change status from Completed");
+        }
+
+        require(newStatus == TaskStatus.Completed, "Only allowed: Pending -> Completed");
+
+        task.status = newStatus;
+
+        emit TaskStatusUpdated(
+            taskId,
+            msg.sender,
+            newStatus == TaskStatus.Completed ? "Completed" : "Pending",
+            block.timestamp
+        );
+    }
+
+    function getAllUsers() external view returns (address[] memory) {
+        return userList;
+    }
+
+    function getAllTaskByUser(address user) external view returns(Task[] memory){
+        uint256[] memory ids = userTaskIds[user];
+        Task[] memory result = new Task[](ids.length);
+
+        for(uint256 i = 0; i < ids.length; i++){
+            result[i] = tasks[ids[i]];
+        }
+
+        return result;
+    }
+
+    function getTasksByDate(uint32 date) external view returns (Task[] memory) {
+        uint256[] memory ids = dateTaskIds[date];
+        Task[] memory result = new Task[](ids.length);
+        for (uint256 i = 0; i < ids.length; i++) {
+            result[i] = tasks[ids[i]];
+        }
+        return result;
+    }
+
+        function getAllUserTasksByDate(address user, uint32 _date) external view returns (Task[] memory) {
+        uint256[] memory ids = userTaskIds[user];
+        uint256 count = 0;
+
+        for (uint256 i = 0; i < ids.length; i++) {
+            if (tasks[ids[i]].date == _date && !tasks[ids[i]].isDeleted) {
+                count++;
+            }
+        }
+
+        Task[] memory result = new Task[](count);
+        uint256 resultIndex = 0;
+
+        for (uint256 i = 0; i < ids.length; i++) {
+            if (tasks[ids[i]].date == _date && !tasks[ids[i]].isDeleted) {
+                result[resultIndex] = tasks[ids[i]];
+                resultIndex++;
+            }
+        }
+
+        return result;
+    }
+
+    function getPendingTasks(address user) external view returns (Task[] memory) {
+        uint256[] memory ids = userTaskIds[user];
+        uint256 count = 0;
+
+        for (uint256 i = 0; i < ids.length; i++) {
+            if (tasks[ids[i]].status == TaskStatus.Pending && !tasks[ids[i]].isDeleted) {
+                count++;
+            }
+        }
+
+        Task[] memory result = new Task[](count);
+        uint256 resultIndex = 0;
+
+        for (uint256 i = 0; i < ids.length; i++) {
+            if (tasks[ids[i]].status == TaskStatus.Pending && !tasks[ids[i]].isDeleted) {
+                result[resultIndex] = tasks[ids[i]];
+                resultIndex++;
+            }
+        }
+
+        return result;
+    }
+
+    function getCompletedTasks(address user) external view returns (Task[] memory) {
+        uint256[] memory ids = userTaskIds[user];
+        uint256 count = 0;
+
+        for (uint256 i = 0; i < ids.length; i++) {
+            if (tasks[ids[i]].status == TaskStatus.Completed && !tasks[ids[i]].isDeleted) {
+                count++;
+            }
+        }
+
+        Task[] memory result = new Task[](count);
+        uint256 resultIndex = 0;
+
+        for (uint256 i = 0; i < ids.length; i++) {
+            if (tasks[ids[i]].status == TaskStatus.Completed && !tasks[ids[i]].isDeleted) {
+                result[resultIndex] = tasks[ids[i]];
+                resultIndex++;
+            }
+        }
+
+        return result;
+    }
+
+    function getTasksByStatus(address user, TaskStatus _status) external view returns (Task[] memory) {
+        uint256[] memory ids = userTaskIds[user];
+        uint256 count = 0;
+
+        for (uint256 i = 0; i < ids.length; i++) {
+            if (tasks[ids[i]].status == _status && !tasks[ids[i]].isDeleted) {
+                count++;
+            }
+        }
+
+        Task[] memory result = new Task[](count);
+        uint256 resultIndex = 0;
+
+        for (uint256 i = 0; i < ids.length; i++) {
+            if (tasks[ids[i]].status == _status && !tasks[ids[i]].isDeleted) {
+                result[resultIndex] = tasks[ids[i]];
+                resultIndex++;
+            }
+        }
+
+        return result;
     }
 
     function removeTaskId(uint256[] storage arr, uint256 taskIdToRemove) internal {
@@ -153,6 +332,4 @@ contract TodoContract {
 
         return timestamp;
     }
-
-    function re
 }
