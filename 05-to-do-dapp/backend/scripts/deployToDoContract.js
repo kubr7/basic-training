@@ -2,24 +2,12 @@ const { ethers } = require("hardhat");
 require("dotenv").config();
 
 async function main() {
-    console.log("Deploying TodoContract...");
-
+    console.log("Deploying ToDoContract...");
     const userTaskCountAddress = process.env.USERTASKCOUNT_CONTRACT_ADDRESS;
-    
-
-    console.log("UserTaskCount address:", userTaskCountAddress);
-    console.log("Source:", process.env.USERTASKCOUNT_CONTRACT_ADDRESS ? "Environment variable" : "Unknown");
-
-    const TodoContract = await ethers.getContractFactory("TodoContract");
-    
-    console.log("Deploying TodoContract...");
-    const todoContract = await TodoContract.deploy(userTaskCountAddress);
-    
+    const ToDoContract = await ethers.getContractFactory("ToDoContract");
+    const todoContract = await ToDoContract.deploy(userTaskCountAddress);
     await todoContract.waitForDeployment();
     const todoAddress = await todoContract.getAddress();
-    
-    console.log("TodoContract deployed successfully!");
-    console.log("Contract address:", todoAddress);
     
     return {
         address: todoAddress,
