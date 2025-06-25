@@ -1,9 +1,10 @@
-// test/TodoContract.test.js
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
+// test/ToDoContract.test.js
 
-describe("TodoContract", function () {
-  let TodoContract, UserTaskCount, todoContract, userTaskCountContract;
+const { expect } = require("chai");
+const { ethers } = require("hardhat");  
+
+describe("ToDoContract", function () {
+  let ToDoContract, UserTaskCount, todoContract, userTaskCountContract;
   let owner, addr1, addr2, addr3;
 
   beforeEach(async () => {
@@ -16,8 +17,8 @@ describe("TodoContract", function () {
     await userTaskCountContract.waitForDeployment();
 
     // Deploy TodoContract with UserTaskCount address (auto-links)
-    TodoContract = await ethers.getContractFactory("TodoContract");
-    todoContract = await TodoContract.deploy(await userTaskCountContract.getAddress());
+    ToDoContract = await ethers.getContractFactory("ToDoContract");
+    todoContract = await ToDoContract.deploy(await userTaskCountContract.getAddress());
     await todoContract.waitForDeployment();
   });
 
@@ -38,7 +39,7 @@ describe("TodoContract", function () {
 
     it("should reject deployment with zero address", async function () {
       await expect(
-        TodoContract.deploy(ethers.ZeroAddress)
+        ToDoContract.deploy(ethers.ZeroAddress)
       ).to.be.revertedWith("Invalid UserTaskCount address");
     });
   });
