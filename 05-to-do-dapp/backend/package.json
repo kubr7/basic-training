@@ -5,9 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "npx hardhat test",
-    "deploy:userTaskCount": "node scripts/deployUserTaskCount.js",
-    "deploy:todoContract": "node scripts/deployToDoContract.js",
-    "deploy:all": "npm run deploy:userTaskCount && npm run deploy:todoContract",
+    "deploy:userTaskCount": "npx hardhat run scripts/deployUserTaskCount.js --network sepolia",
+    "deploy:toDoContract": "npx hardhat run scripts/deployToDoContract.js --network sepolia",
     "compile": "npx hardhat compile"
   },
   "keywords": [],
