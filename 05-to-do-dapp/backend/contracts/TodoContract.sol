@@ -1,9 +1,10 @@
+// contracts/ToDoContract.sol
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
 import "./UserTaskCount.sol";
 
-contract TodoContract {
+contract ToDoContract {
     enum TaskStatus {
         Pending,
         Completed
@@ -23,7 +24,6 @@ contract TodoContract {
     mapping(uint256 => Task) public tasks;
     mapping(address => uint256[]) public userTaskIds;
     mapping(uint32 => uint256[]) public dateTaskIds;
-    // mapping(address => uint256) public userTaskCount;
     address[] public userList;
     mapping(address => bool) public userExists;
 
@@ -48,8 +48,8 @@ contract TodoContract {
     event TaskModified(
         uint256 indexed taskId,
         address indexed modifiedBy,
-        string oldDescription,
-        string newDescription,
+        bytes32 oldDescriptionHash,
+        bytes32 newDescriptionHash,
         uint32 oldDate,
         uint32 newDate,
         uint256 timestamp
@@ -64,7 +64,7 @@ contract TodoContract {
     event TaskStatusUpdated(
         uint256 indexed taskId,
         address updatedBy,
-        string status,
+        TaskStatus status,
         uint256 timestamp
     );
 
@@ -107,7 +107,6 @@ contract TodoContract {
         userTaskIds[msg.sender].push(taskId);
         userTaskIds[assignedTo].push(taskId);
         dateTaskIds[date].push(taskId);
-        // userTaskCount[msg.sender]++;
 
         if (!userExists[msg.sender]) {
             userExists[msg.sender] = true;
@@ -145,7 +144,9 @@ contract TodoContract {
 
         dateTaskIds[newDate].push(taskId);
 
-        emit TaskModified(taskId, msg.sender, oldTaskDescription, newDescription, oldDate, newDate, block.timestamp);
+        bytes32 oldDescHash = keccak256(abi.encodePacked(oldTaskDescription));
+        bytes32 newDescHash = keccak256(abi.encodePacked(newDescription));
+        emit TaskModified(taskId, msg.sender, oldDescHash, newDescHash, oldDate, newDate, block.timestamp);
     }
 
     function deleteTask(uint taskId) external taskExists(taskId) onlyCreator(taskId) {
@@ -172,7 +173,7 @@ contract TodoContract {
         emit TaskStatusUpdated(
             taskId,
             msg.sender,
-            newStatus == TaskStatus.Completed ? "Completed" : "Pending",
+            newStatus,
             block.timestamp
         );
     }
