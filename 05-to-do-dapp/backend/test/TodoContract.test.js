@@ -60,7 +60,7 @@ describe("ToDoContract", function () {
       expect(task.creator).to.equal(owner.address);
       expect(task.assignedTo).to.equal(addr1.address);
       expect(task.date).to.equal(futureDate);
-      expect(task.status).to.equal(0); // Pending
+      expect(Number(task.status)).to.equal(0); // Pending
       expect(task.isDeleted).to.equal(false);
       expect(task.isModified).to.equal(false);
     });
@@ -185,7 +185,7 @@ describe("ToDoContract", function () {
         .to.emit(todoContract, "TaskStatusUpdated");
 
       const task = await todoContract.tasks(1);
-      expect(task.status).to.equal(1); // Completed
+      expect(Number(task.status)).to.equal(1); // Completed
     });
 
     it("should fail if task already completed", async function () {
@@ -243,6 +243,105 @@ describe("ToDoContract", function () {
       });
     });
 
+    describe("getAllTaskByUserAsCreator", function () {
+      it("should return only tasks created by the user", async function () {
+        const ownerCreatedTasks = await todoContract.getAllTaskByUserAsCreator(owner.address);
+        expect(ownerCreatedTasks.length).to.equal(4); // owner created all 4 tasks
+        
+        // Verify all tasks have owner as creator
+        for (const task of ownerCreatedTasks) {
+          expect(task.creator).to.equal(owner.address);
+          expect(task.isDeleted).to.equal(false);
+        }
+        
+        const addr1CreatedTasks = await todoContract.getAllTaskByUserAsCreator(addr1.address);
+        expect(addr1CreatedTasks.length).to.equal(0); // addr1 didn't create any tasks
+        
+        const addr2CreatedTasks = await todoContract.getAllTaskByUserAsCreator(addr2.address);
+        expect(addr2CreatedTasks.length).to.equal(0); // addr2 didn't create any tasks
+      });
+
+      it("should return empty array for user with no created tasks", async function () {
+        const addr3CreatedTasks = await todoContract.getAllTaskByUserAsCreator(addr3.address);
+        expect(addr3CreatedTasks.length).to.equal(0);
+      });
+    });
+
+    describe("getAllTaskByUserAsAssignee", function () {
+      it("should return only tasks assigned to the user", async function () {
+        const ownerAssignedTasks = await todoContract.getAllTaskByUserAsAssignee(owner.address);
+        expect(ownerAssignedTasks.length).to.equal(0); // owner not assigned to any tasks
+        
+        const addr1AssignedTasks = await todoContract.getAllTaskByUserAsAssignee(addr1.address);
+        expect(addr1AssignedTasks.length).to.equal(3); // addr1 assigned to 3 tasks
+        
+        // Verify all tasks have addr1 as assignee
+        for (const task of addr1AssignedTasks) {
+          expect(task.assignedTo).to.equal(addr1.address);
+          expect(task.isDeleted).to.equal(false);
+        }
+        
+        const addr2AssignedTasks = await todoContract.getAllTaskByUserAsAssignee(addr2.address);
+        expect(addr2AssignedTasks.length).to.equal(1); // addr2 assigned to 1 task
+        
+        // Verify the task has addr2 as assignee
+        expect(addr2AssignedTasks[0].assignedTo).to.equal(addr2.address);
+        expect(addr2AssignedTasks[0].isDeleted).to.equal(false);
+      });
+
+      it("should return empty array for user with no assigned tasks", async function () {
+        const addr3AssignedTasks = await todoContract.getAllTaskByUserAsAssignee(addr3.address);
+        expect(addr3AssignedTasks.length).to.equal(0);
+      });
+
+      it("should handle completed tasks correctly", async function () {
+        const addr1AssignedTasks = await todoContract.getAllTaskByUserAsAssignee(addr1.address);
+        
+        // Check that we have the expected number of tasks
+        expect(addr1AssignedTasks.length).to.equal(3);
+        
+        // Find the completed task - should be one with status 1
+        const completedTasks = addr1AssignedTasks.filter(task => Number(task.status) === 1);
+        const pendingTasks = addr1AssignedTasks.filter(task => Number(task.status) === 0);
+        
+        expect(completedTasks.length).to.equal(1);
+        expect(pendingTasks.length).to.equal(2);
+        
+        // Verify the completed task properties
+        const completedTask = completedTasks[0];
+        expect(completedTask.assignedTo).to.equal(addr1.address);
+        expect(Number(completedTask.status)).to.equal(1); // Completed
+        expect(completedTask.isDeleted).to.equal(false);
+      });
+    });
+
+    describe("Creator vs Assignee distinction", function () {
+      beforeEach(async () => {
+        // Create a task where addr1 creates a task for themselves
+        await todoContract.connect(addr1).createTask(addr1.address, "Self-assigned task", futureDate);
+      });
+
+      it("should distinguish between creator and assignee roles", async function () {
+        const addr1CreatedTasks = await todoContract.getAllTaskByUserAsCreator(addr1.address);
+        expect(addr1CreatedTasks.length).to.equal(1); // addr1 created 1 task
+        
+        const addr1AssignedTasks = await todoContract.getAllTaskByUserAsAssignee(addr1.address);
+        expect(addr1AssignedTasks.length).to.equal(4); // addr1 assigned to 4 tasks (3 from before + 1 self-assigned)
+        
+        // The self-assigned task should appear in both lists but be the same task
+        const selfAssignedTaskAsCreator = addr1CreatedTasks.find(task => 
+          task.creator === addr1.address && task.assignedTo === addr1.address
+        );
+        const selfAssignedTaskAsAssignee = addr1AssignedTasks.find(task => 
+          task.creator === addr1.address && task.assignedTo === addr1.address
+        );
+        
+        expect(selfAssignedTaskAsCreator).to.not.be.undefined;
+        expect(selfAssignedTaskAsAssignee).to.not.be.undefined;
+        expect(selfAssignedTaskAsCreator.id).to.equal(selfAssignedTaskAsAssignee.id);
+      });
+    });
+
     describe("getTasksByDate", function () {
       it("should return tasks for specific date", async function () {
         const tasksForDate1 = await todoContract.getTasksByDate(futureDate);
@@ -269,7 +368,7 @@ describe("ToDoContract", function () {
         expect(pendingTasks.length).to.equal(2); // 3 total - 1 completed = 2 pending
         
         for (const task of pendingTasks) {
-          expect(task.status).to.equal(0); // Pending
+          expect(Number(task.status)).to.equal(0); // Pending
           expect(task.isDeleted).to.equal(false);
         }
       });
@@ -280,7 +379,7 @@ describe("ToDoContract", function () {
         const completedTasks = await todoContract.getCompletedTasks(addr1.address);
         expect(completedTasks.length).to.equal(1);
         
-        expect(completedTasks[0].status).to.equal(1); // Completed
+        expect(Number(completedTasks[0].status)).to.equal(1); // Completed
         expect(completedTasks[0].isDeleted).to.equal(false);
       });
     });
@@ -304,30 +403,129 @@ describe("ToDoContract", function () {
         expect(users.length).to.be.at.least(3);
       });
     });
+
+    describe("getActiveTaskCount", function () {
+      it("should return correct active task count before any deletions", async function () {
+        const totalTasks = await todoContract.taskCount();
+        const activeTasks = await todoContract.getActiveTaskCount();
+        
+        expect(totalTasks).to.equal(4); // 4 tasks were created in beforeEach
+        expect(activeTasks).to.equal(4); // All tasks are active initially
+      });
+
+      it("should decrease active count after task deletion", async function () {
+        // Delete task 1 (created by owner)
+        await todoContract.deleteTask(1);
+        
+        const totalTasks = await todoContract.taskCount();
+        const activeTasks = await todoContract.getActiveTaskCount();
+        
+        expect(totalTasks).to.equal(4); // Total tasks never decreases
+        expect(activeTasks).to.equal(3); // Active tasks decrease after deletion
+        
+        // Verify the deleted task is marked as deleted
+        const deletedTask = await todoContract.tasks(1);
+        expect(deletedTask.isDeleted).to.equal(true);
+      });
+
+      it("should handle multiple deletions correctly", async function () {
+        // Delete multiple tasks
+        await todoContract.deleteTask(1);
+        await todoContract.deleteTask(2);
+        
+        const totalTasks = await todoContract.taskCount();
+        const activeTasks = await todoContract.getActiveTaskCount();
+        
+        expect(totalTasks).to.equal(4); // Total tasks never decreases
+        expect(activeTasks).to.equal(2); // Only 2 tasks remain active
+      });
+
+      it("should return 0 when all tasks are deleted", async function () {
+        // Delete all tasks
+        await todoContract.deleteTask(1);
+        await todoContract.deleteTask(2);
+        await todoContract.deleteTask(3);
+        await todoContract.deleteTask(4);
+        
+        const totalTasks = await todoContract.taskCount();
+        const activeTasks = await todoContract.getActiveTaskCount();
+        
+        expect(totalTasks).to.equal(4); // Total tasks never decreases
+        expect(activeTasks).to.equal(0); // No active tasks remaining
+      });
+
+      it("should not be affected by task status changes", async function () {
+        // Note: Task 2 is already completed in beforeEach, so let's complete task 1 instead
+        await todoContract.connect(addr1).updateTaskStatus(1, 1); // Complete task 1
+        
+        const activeTasks = await todoContract.getActiveTaskCount();
+        expect(activeTasks).to.equal(4); // Completed tasks are still active (not deleted)
+        
+        // Now delete a task
+        await todoContract.deleteTask(3); // Delete task 3 instead to avoid conflicts
+        const activeTasksAfterDeletion = await todoContract.getActiveTaskCount();
+        expect(activeTasksAfterDeletion).to.equal(3); // Only deletion affects active count
+      });
+    });
+  });
+
+  describe("Task Count Consistency", function () {
+    const futureDate = 25122025;
+
+    beforeEach(async () => {
+      // Start with a clean state for this test suite
+      // The contract already has tasks from the main test suite, let's work with those
+    });
+
+    it("should maintain consistency between taskCount and getActiveTaskCount", async function () {
+      // Initial state
+      const initialTotal = await todoContract.taskCount();
+      const initialActive = await todoContract.getActiveTaskCount();
+      
+      // Create a new task
+      await todoContract.createTask(addr1.address, "New Test Task", futureDate);
+      
+      const afterCreateTotal = await todoContract.taskCount();
+      const afterCreateActive = await todoContract.getActiveTaskCount();
+      
+      // Both should increase by 1
+      expect(afterCreateTotal).to.equal(initialTotal + 1n);
+      expect(afterCreateActive).to.equal(initialActive + 1n);
+      
+      // Delete the newly created task
+      await todoContract.deleteTask(afterCreateTotal); // Delete the last task
+      
+      const afterDeleteTotal = await todoContract.taskCount();
+      const afterDeleteActive = await todoContract.getActiveTaskCount();
+      
+      // Total should stay the same, active should decrease by 1
+      expect(afterDeleteTotal).to.equal(afterCreateTotal);
+      expect(afterDeleteActive).to.equal(initialActive);
+    });
   });
 
   describe("Date Conversion", function () {
     it("should correctly convert date format", async function () {
-      const timestamp = await todoContract.convertDateToTimestamp(1012023);
+      const timestamp = await todoContract._convertDateToTimestamp(1012023);
       expect(timestamp).to.be.a('bigint');
       expect(timestamp).to.be.greaterThan(0);
     });
 
     it("should fail with invalid month", async function () {
       await expect(
-        todoContract.convertDateToTimestamp(1132023)
+        todoContract._convertDateToTimestamp(1132023)
       ).to.be.revertedWith("Invalid month");
     });
 
     it("should fail with invalid day", async function () {
       await expect(
-        todoContract.convertDateToTimestamp(32012023)
+        todoContract._convertDateToTimestamp(32012023)
       ).to.be.revertedWith("Invalid day");
     });
 
     it("should fail with invalid year", async function () {
       await expect(
-        todoContract.convertDateToTimestamp(1011969)
+        todoContract._convertDateToTimestamp(1011969)
       ).to.be.revertedWith("Year must be >= 1970");
     });
   });
