@@ -86,7 +86,7 @@ contract ToDoContract {
 
     function createTask(address assignedTo, string memory description, uint32 date) external {
         require(assignedTo != address(0), "Assigned address can not be zero");
-        uint256 expectedTimestamp = convertDateToTimestamp(date);
+        uint256 expectedTimestamp = _convertDateToTimestamp(date);
         require(
             expectedTimestamp >= block.timestamp,
             "Date can not be in past"
@@ -134,7 +134,7 @@ contract ToDoContract {
         Task storage task = tasks[taskId];
         require(task.status != TaskStatus.Completed, "Can not modify completed task");
 
-        removeTaskId(dateTaskIds[task.date], taskId);
+        _removeTaskId(dateTaskIds[task.date], taskId);
 
         string memory oldTaskDescription = task.description;
         task.description = newDescription;
@@ -152,9 +152,9 @@ contract ToDoContract {
     function deleteTask(uint taskId) external taskExists(taskId) onlyCreator(taskId) {
         Task storage task = tasks[taskId];
 
-        removeTaskId(userTaskIds[task.assignedTo], taskId);
-        removeTaskId(dateTaskIds[task.date], taskId);
-
+        _removeTaskId(userTaskIds[task.assignedTo], taskId);
+        _removeTaskId(dateTaskIds[task.date], taskId);
+        task.isDeleted = true;
         emit TaskDeleted(taskId, msg.sender, block.timestamp);  
     }
 
@@ -182,6 +182,16 @@ contract ToDoContract {
         return userList;
     }
 
+    function getActiveTaskCount() external view returns (uint256) {
+        uint256 activeCount = 0;
+        for (uint256 i = 1; i <= taskCount; i++) {
+            if (!tasks[i].isDeleted) {
+                activeCount++;
+            }
+        }
+        return activeCount;
+    }
+
     function getAllTaskByUser(address user) external view returns(Task[] memory){
         uint256[] memory ids = userTaskIds[user];
         Task[] memory result = new Task[](ids.length);
@@ -190,6 +200,54 @@ contract ToDoContract {
             result[i] = tasks[ids[i]];
         }
 
+        return result;
+    }
+
+    function getAllTaskByUserAsCreator(address user) external view returns(Task[] memory){
+        uint256 count = 0;
+        
+        // Count tasks where user is creator
+        for(uint256 i = 1; i <= taskCount; i++){
+            if(tasks[i].creator == user && !tasks[i].isDeleted){
+                count++;
+            }
+        }
+        
+        Task[] memory result = new Task[](count);
+        uint256 resultIndex = 0;
+            
+        // Fill array with tasks where user is creator
+        for(uint256 i = 1; i <= taskCount; i++){
+            if(tasks[i].creator == user && !tasks[i].isDeleted){
+                result[resultIndex] = tasks[i];
+                resultIndex++;
+            }
+        }
+        
+        return result;
+    }
+
+    function getAllTaskByUserAsAssignee(address user) external view returns(Task[] memory){
+        uint256 count = 0;
+        
+        // Count tasks where user is assignee
+        for(uint256 i = 1; i <= taskCount; i++){
+            if(tasks[i].assignedTo == user && !tasks[i].isDeleted){
+                count++;
+            }
+        }
+        
+        Task[] memory result = new Task[](count);
+        uint256 resultIndex = 0;
+        
+        // Fill array with tasks where user is assignee
+        for(uint256 i = 1; i <= taskCount; i++){
+            if(tasks[i].assignedTo == user && !tasks[i].isDeleted){
+                result[resultIndex] = tasks[i];
+                resultIndex++;
+            }
+        }
+        
         return result;
     }
 
@@ -202,7 +260,7 @@ contract ToDoContract {
         return result;
     }
 
-        function getAllUserTasksByDate(address user, uint32 _date) external view returns (Task[] memory) {
+    function getAllUserTasksByDate(address user, uint32 _date) external view returns (Task[] memory) {
         uint256[] memory ids = userTaskIds[user];
         uint256 count = 0;
 
@@ -294,7 +352,7 @@ contract ToDoContract {
         return result;
     }
 
-    function removeTaskId(uint256[] storage arr, uint256 taskIdToRemove) internal {
+    function _removeTaskId(uint256[] storage arr, uint256 taskIdToRemove) internal {
         for(uint i = 0; i < arr.length; i++){
             if(arr[i] == taskIdToRemove){
                 uint256 temp = arr[i];
@@ -306,7 +364,7 @@ contract ToDoContract {
         }
     }
 
-    function convertDateToTimestamp(uint32 ddmmyyyy) public pure returns (uint256) {
+    function _convertDateToTimestamp(uint32 ddmmyyyy) public pure returns (uint256) {
         uint256 day = ddmmyyyy / 1e6; // DD
         uint256 month = (ddmmyyyy / 1e4) % 100; // MM
         uint256 year = ddmmyyyy % 10000; // YYYY
