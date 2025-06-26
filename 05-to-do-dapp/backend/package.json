@@ -7,6 +7,7 @@
     "test": "npx hardhat test",
     "deploy:userTaskCount": "npx hardhat run scripts/deployUserTaskCount.js --network sepolia",
     "deploy:toDoContract": "npx hardhat run scripts/deployToDoContract.js --network sepolia",
+    "interact": "npx hardhat run scripts/interaction.js --network sepolia",
     "compile": "npx hardhat compile"
   },
   "keywords": [],
