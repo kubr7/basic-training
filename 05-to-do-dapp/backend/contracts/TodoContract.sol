@@ -30,11 +30,14 @@ contract ToDoContract {
     UserTaskCount public userTaskCountContract;
 
     constructor(address _userTaskCountContract) {
-        require(_userTaskCountContract != address(0), "Invalid UserTaskCount address");
+        require(
+            _userTaskCountContract != address(0),
+            "Invalid UserTaskCount address"
+        );
         userTaskCountContract = UserTaskCount(_userTaskCountContract);
-        
+
         UserTaskCount(_userTaskCountContract).setTodoContract(address(this));
-    } 
+    }
 
     event TaskCreated(
         uint256 indexed taskId,
@@ -69,12 +72,18 @@ contract ToDoContract {
     );
 
     modifier onlyCreator(uint256 taskId) {
-        require(tasks[taskId].creator == msg.sender, "Only creator can call this");
+        require(
+            tasks[taskId].creator == msg.sender,
+            "Only creator can call this"
+        );
         _;
     }
 
     modifier onlyAssigned(uint256 taskId) {
-        require(tasks[taskId].assignedTo == msg.sender, "Only assign can call this");
+        require(
+            tasks[taskId].assignedTo == msg.sender,
+            "Only assign can call this"
+        );
         _;
     }
 
@@ -84,28 +93,36 @@ contract ToDoContract {
         _;
     }
 
-    function createTask(address assignedTo, string memory description, uint32 date) external {
+    function createTask(
+        address assignedTo,
+        string memory description,
+        uint32 date
+    ) external {
         require(assignedTo != address(0), "Assigned address can not be zero");
+
         uint256 expectedTimestamp = _convertDateToTimestamp(date);
         require(
             expectedTimestamp >= block.timestamp,
             "Date can not be in past"
         );
-        uint256 taskId = ++taskCount;
-        Task memory newTask = Task({
-            id: taskId,
-            creator: msg.sender,
-            assignedTo: assignedTo,
-            description: description,
-            date: date,
-            status: TaskStatus.Pending,
-            isDeleted: false,
-            isModified: false
-        });
 
-        tasks[taskId] = newTask;
+        uint256 taskId = ++taskCount;
+        Task storage task = tasks[taskId];
+
+        task.id = taskId;
+        task.creator = msg.sender;
+        task.assignedTo = assignedTo;
+        task.description = description;
+        task.date = date;
+        task.status = TaskStatus.Pending;
+        task.isDeleted = false;
+        task.isModified = false;
+
         userTaskIds[msg.sender].push(taskId);
-        userTaskIds[assignedTo].push(taskId);
+        if (msg.sender != assignedTo) {
+            userTaskIds[assignedTo].push(taskId);
+        }
+
         dateTaskIds[date].push(taskId);
 
         if (!userExists[msg.sender]) {
@@ -113,7 +130,7 @@ contract ToDoContract {
             userList.push(msg.sender);
         }
 
-        if (!userExists[assignedTo]) {
+        if (assignedTo != msg.sender && !userExists[assignedTo]) {
             userExists[assignedTo] = true;
             userList.push(assignedTo);
         }
@@ -130,9 +147,16 @@ contract ToDoContract {
         );
     }
 
-    function modifyTask(uint256 taskId, string calldata newDescription, uint32 newDate) external taskExists(taskId) onlyCreator(taskId){
+    function modifyTask(
+        uint256 taskId,
+        string calldata newDescription,
+        uint32 newDate
+    ) external taskExists(taskId) onlyCreator(taskId) {
         Task storage task = tasks[taskId];
-        require(task.status != TaskStatus.Completed, "Can not modify completed task");
+        require(
+            task.status != TaskStatus.Completed,
+            "Can not modify completed task"
+        );
 
         _removeTaskId(dateTaskIds[task.date], taskId);
 
@@ -146,19 +170,32 @@ contract ToDoContract {
 
         bytes32 oldDescHash = keccak256(abi.encodePacked(oldTaskDescription));
         bytes32 newDescHash = keccak256(abi.encodePacked(newDescription));
-        emit TaskModified(taskId, msg.sender, oldDescHash, newDescHash, oldDate, newDate, block.timestamp);
+        emit TaskModified(
+            taskId,
+            msg.sender,
+            oldDescHash,
+            newDescHash,
+            oldDate,
+            newDate,
+            block.timestamp
+        );
     }
 
-    function deleteTask(uint taskId) external taskExists(taskId) onlyCreator(taskId) {
+    function deleteTask(
+        uint taskId
+    ) external taskExists(taskId) onlyCreator(taskId) {
         Task storage task = tasks[taskId];
 
         _removeTaskId(userTaskIds[task.assignedTo], taskId);
         _removeTaskId(dateTaskIds[task.date], taskId);
         task.isDeleted = true;
-        emit TaskDeleted(taskId, msg.sender, block.timestamp);  
+        emit TaskDeleted(taskId, msg.sender, block.timestamp);
     }
 
-    function updateTaskStatus(uint256 taskId, TaskStatus newStatus) external taskExists(taskId) onlyAssigned(taskId){
+    function updateTaskStatus(
+        uint256 taskId,
+        TaskStatus newStatus
+    ) external taskExists(taskId) onlyAssigned(taskId) {
         Task storage task = tasks[taskId];
         TaskStatus currentStatus = task.status;
 
@@ -166,16 +203,14 @@ contract ToDoContract {
             revert("Cannot change status from Completed");
         }
 
-        require(newStatus == TaskStatus.Completed, "Only allowed: Pending -> Completed");
+        require(
+            newStatus == TaskStatus.Completed,
+            "Only allowed: Pending -> Completed"
+        );
 
         task.status = newStatus;
 
-        emit TaskStatusUpdated(
-            taskId,
-            msg.sender,
-            newStatus,
-            block.timestamp
-        );
+        emit TaskStatusUpdated(taskId, msg.sender, newStatus, block.timestamp);
     }
 
     function getAllUsers() external view returns (address[] memory) {
@@ -192,62 +227,86 @@ contract ToDoContract {
         return activeCount;
     }
 
-    function getAllTaskByUser(address user) external view returns(Task[] memory){
+    function getActiveTasks() external view returns (Task[] memory) {
+        uint256 activeCount = 0;
+        
+        for (uint256 i = 1; i <= taskCount; i++) {
+            if (tasks[i].id > 0 && !tasks[i].isDeleted) {
+                activeCount++;
+            }
+        }
+        
+        Task[] memory result = new Task[](activeCount);
+        uint256 resultIndex = 0;
+        
+        for (uint256 i = 1; i <= taskCount; i++) {
+            if (tasks[i].id > 0 && !tasks[i].isDeleted) {
+                result[resultIndex] = tasks[i];
+                resultIndex++;
+            }
+        }
+        
+        return result;
+    }
+
+    function getAllTaskByUser(
+        address user
+    ) external view returns (Task[] memory) {
         uint256[] memory ids = userTaskIds[user];
         Task[] memory result = new Task[](ids.length);
 
-        for(uint256 i = 0; i < ids.length; i++){
+        for (uint256 i = 0; i < ids.length; i++) {
             result[i] = tasks[ids[i]];
         }
 
         return result;
     }
 
-    function getAllTaskByUserAsCreator(address user) external view returns(Task[] memory){
+    function getAllTaskByUserAsCreator(
+        address user
+    ) external view returns (Task[] memory) {
         uint256 count = 0;
-        
-        // Count tasks where user is creator
-        for(uint256 i = 1; i <= taskCount; i++){
-            if(tasks[i].creator == user && !tasks[i].isDeleted){
+
+        for (uint256 i = 1; i <= taskCount; i++) {
+            if (tasks[i].creator == user && !tasks[i].isDeleted) {
                 count++;
             }
         }
-        
+
         Task[] memory result = new Task[](count);
         uint256 resultIndex = 0;
-            
-        // Fill array with tasks where user is creator
-        for(uint256 i = 1; i <= taskCount; i++){
-            if(tasks[i].creator == user && !tasks[i].isDeleted){
+
+        for (uint256 i = 1; i <= taskCount; i++) {
+            if (tasks[i].creator == user && !tasks[i].isDeleted) {
                 result[resultIndex] = tasks[i];
                 resultIndex++;
             }
         }
-        
+
         return result;
     }
 
-    function getAllTaskByUserAsAssignee(address user) external view returns(Task[] memory){
+    function getAllTaskByUserAsAssignee(
+        address user
+    ) external view returns (Task[] memory) {
         uint256 count = 0;
-        
-        // Count tasks where user is assignee
-        for(uint256 i = 1; i <= taskCount; i++){
-            if(tasks[i].assignedTo == user && !tasks[i].isDeleted){
+
+        for (uint256 i = 1; i <= taskCount; i++) {
+            if (tasks[i].assignedTo == user && !tasks[i].isDeleted) {
                 count++;
             }
         }
-        
+
         Task[] memory result = new Task[](count);
         uint256 resultIndex = 0;
-        
-        // Fill array with tasks where user is assignee
-        for(uint256 i = 1; i <= taskCount; i++){
-            if(tasks[i].assignedTo == user && !tasks[i].isDeleted){
+
+        for (uint256 i = 1; i <= taskCount; i++) {
+            if (tasks[i].assignedTo == user && !tasks[i].isDeleted) {
                 result[resultIndex] = tasks[i];
                 resultIndex++;
             }
         }
-        
+
         return result;
     }
 
@@ -260,7 +319,10 @@ contract ToDoContract {
         return result;
     }
 
-    function getAllUserTasksByDate(address user, uint32 _date) external view returns (Task[] memory) {
+    function getAllUserTasksByDate(
+        address user,
+        uint32 _date
+    ) external view returns (Task[] memory) {
         uint256[] memory ids = userTaskIds[user];
         uint256 count = 0;
 
@@ -283,12 +345,17 @@ contract ToDoContract {
         return result;
     }
 
-    function getPendingTasks(address user) external view returns (Task[] memory) {
+    function getPendingTasks(
+        address user
+    ) external view returns (Task[] memory) {
         uint256[] memory ids = userTaskIds[user];
         uint256 count = 0;
 
         for (uint256 i = 0; i < ids.length; i++) {
-            if (tasks[ids[i]].status == TaskStatus.Pending && !tasks[ids[i]].isDeleted) {
+            if (
+                tasks[ids[i]].status == TaskStatus.Pending &&
+                !tasks[ids[i]].isDeleted
+            ) {
                 count++;
             }
         }
@@ -297,7 +364,10 @@ contract ToDoContract {
         uint256 resultIndex = 0;
 
         for (uint256 i = 0; i < ids.length; i++) {
-            if (tasks[ids[i]].status == TaskStatus.Pending && !tasks[ids[i]].isDeleted) {
+            if (
+                tasks[ids[i]].status == TaskStatus.Pending &&
+                !tasks[ids[i]].isDeleted
+            ) {
                 result[resultIndex] = tasks[ids[i]];
                 resultIndex++;
             }
@@ -306,12 +376,17 @@ contract ToDoContract {
         return result;
     }
 
-    function getCompletedTasks(address user) external view returns (Task[] memory) {
+    function getCompletedTasks(
+        address user
+    ) external view returns (Task[] memory) {
         uint256[] memory ids = userTaskIds[user];
         uint256 count = 0;
 
         for (uint256 i = 0; i < ids.length; i++) {
-            if (tasks[ids[i]].status == TaskStatus.Completed && !tasks[ids[i]].isDeleted) {
+            if (
+                tasks[ids[i]].status == TaskStatus.Completed &&
+                !tasks[ids[i]].isDeleted
+            ) {
                 count++;
             }
         }
@@ -320,7 +395,10 @@ contract ToDoContract {
         uint256 resultIndex = 0;
 
         for (uint256 i = 0; i < ids.length; i++) {
-            if (tasks[ids[i]].status == TaskStatus.Completed && !tasks[ids[i]].isDeleted) {
+            if (
+                tasks[ids[i]].status == TaskStatus.Completed &&
+                !tasks[ids[i]].isDeleted
+            ) {
                 result[resultIndex] = tasks[ids[i]];
                 resultIndex++;
             }
@@ -329,7 +407,10 @@ contract ToDoContract {
         return result;
     }
 
-    function getTasksByStatus(address user, TaskStatus _status) external view returns (Task[] memory) {
+    function getTasksByStatus(
+        address user,
+        TaskStatus _status
+    ) external view returns (Task[] memory) {
         uint256[] memory ids = userTaskIds[user];
         uint256 count = 0;
 
@@ -352,19 +433,22 @@ contract ToDoContract {
         return result;
     }
 
-    function _removeTaskId(uint256[] storage arr, uint256 taskIdToRemove) internal {
-        for(uint i = 0; i < arr.length; i++){
-            if(arr[i] == taskIdToRemove){
-                uint256 temp = arr[i];
+    function _removeTaskId(
+        uint256[] storage arr,
+        uint256 taskIdToRemove
+    ) internal {
+        for (uint i = 0; i < arr.length; i++) {
+            if (arr[i] == taskIdToRemove) {
                 arr[i] = arr[arr.length - 1];
-                arr[arr.length -1] = temp;
                 arr.pop();
                 break;
             }
         }
     }
 
-    function _convertDateToTimestamp(uint32 ddmmyyyy) public pure returns (uint256) {
+    function _convertDateToTimestamp(
+        uint32 ddmmyyyy
+    ) internal pure returns (uint256) {
         uint256 day = ddmmyyyy / 1e6; // DD
         uint256 month = (ddmmyyyy / 1e4) % 100; // MM
         uint256 year = ddmmyyyy % 10000; // YYYY
@@ -391,4 +475,13 @@ contract ToDoContract {
 
         return timestamp;
     }
+
+    function getUserTaskCount(address user) external view returns (uint256) {
+        return userTaskCountContract.getUserTaskCount(user);
+    }
+
+    function dev_convertDateToTimestamp(uint32 date) external pure returns (uint256) {
+        return _convertDateToTimestamp(date);
+    }
+
 }
