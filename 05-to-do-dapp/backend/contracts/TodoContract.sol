@@ -345,68 +345,6 @@ contract ToDoContract {
         return result;
     }
 
-    function getPendingTasks(
-        address user
-    ) external view returns (Task[] memory) {
-        uint256[] memory ids = userTaskIds[user];
-        uint256 count = 0;
-
-        for (uint256 i = 0; i < ids.length; i++) {
-            if (
-                tasks[ids[i]].status == TaskStatus.Pending &&
-                !tasks[ids[i]].isDeleted
-            ) {
-                count++;
-            }
-        }
-
-        Task[] memory result = new Task[](count);
-        uint256 resultIndex = 0;
-
-        for (uint256 i = 0; i < ids.length; i++) {
-            if (
-                tasks[ids[i]].status == TaskStatus.Pending &&
-                !tasks[ids[i]].isDeleted
-            ) {
-                result[resultIndex] = tasks[ids[i]];
-                resultIndex++;
-            }
-        }
-
-        return result;
-    }
-
-    function getCompletedTasks(
-        address user
-    ) external view returns (Task[] memory) {
-        uint256[] memory ids = userTaskIds[user];
-        uint256 count = 0;
-
-        for (uint256 i = 0; i < ids.length; i++) {
-            if (
-                tasks[ids[i]].status == TaskStatus.Completed &&
-                !tasks[ids[i]].isDeleted
-            ) {
-                count++;
-            }
-        }
-
-        Task[] memory result = new Task[](count);
-        uint256 resultIndex = 0;
-
-        for (uint256 i = 0; i < ids.length; i++) {
-            if (
-                tasks[ids[i]].status == TaskStatus.Completed &&
-                !tasks[ids[i]].isDeleted
-            ) {
-                result[resultIndex] = tasks[ids[i]];
-                resultIndex++;
-            }
-        }
-
-        return result;
-    }
-
     function getTasksByStatus(
         address user,
         TaskStatus _status
