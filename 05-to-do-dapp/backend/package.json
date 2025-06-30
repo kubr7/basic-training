@@ -18,8 +18,11 @@
     "tasks": "npx hardhat run scripts/interaction/queries/list-tasks.js --network sepolia",
     "tasks:count": "npx hardhat run scripts/interaction/queries/user-task-count.js --network sepolia",
     "tasks:active": "npx hardhat run scripts/interaction/queries/list-active-tasks.js --network sepolia",
+    "tasks:status": "npx hardhat run scripts/interaction/queries/tasks-by-status.js --network sepolia",
     "tasks:creator": "npx hardhat run scripts/interaction/queries/tasks-by-creator.js --network sepolia",
     "tasks:assignee": "npx hardhat run scripts/interaction/queries/tasks-by-assignee.js --network sepolia",
+    "tasks:assigned": "npx hardhat run scripts/interaction/queries/assigned-tasks.js --network sepolia",
+    "tasks:created": "npx hardhat run scripts/interaction/queries/created-tasks.js --network sepolia",
     "tasks:date": "npx hardhat run scripts/interaction/queries/tasks-by-date.js --network sepolia",
     "tasks:pending": "npx hardhat run scripts/interaction/queries/list-pending-tasks.js --network sepolia",
     "tasks:completed": "npx hardhat run scripts/interaction/queries/list-completed-task.js --network sepolia"
