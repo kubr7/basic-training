@@ -16,7 +16,7 @@ async function askQuestion(query) {
 }
 
 async function main() {
-    console.log("Interacting with contracts...");
+    console.log("\nInteracting with contracts...");
 
     const contractAddress = process.env.TODO_CONTRACT_ADDRESS;
     if (!contractAddress) {
@@ -25,15 +25,20 @@ async function main() {
     }
 
     const toDoContract = await ethers.getContractAt("ToDoContract", contractAddress);
-    console.log("\nTo-Do Contract Address:", contractAddress);
-
     const userTaskCount = await toDoContract.userTaskCountContract();
-    console.log("UserTaskCount Address:", userTaskCount);
+    
+    console.log("\nContract Addresses:")
+    console.log("- To-Do Contract Address:", contractAddress);
+    console.log("- UserTaskCount Address:", userTaskCount);
 
-    const initialTaskCount = await toDoContract.taskCount();
-    console.log("Initial task count:", initialTaskCount.toString());
+    // const initialTaskCount = await toDoContract.taskCount();
+    // console.log("Initial task count:", initialTaskCount.toString());
 
-    console.log("\n--- Create New Task ---");
+    const activeTaskCount = await toDoContract.getActiveTaskCount();
+    console.log("\nStatus:");
+    console.log("- Active tasks:", activeTaskCount.toString());
+
+    console.log("\nCreate New Task");
 
     const assignedTo = await askQuestion("Enter assignee address: ");
 
@@ -56,10 +61,9 @@ async function main() {
     console.log("Task created successfully!");
 
     console.log("\nFinal Summary:");
-    const finalTaskCount = await toDoContract.taskCount();
-    console.log("Total tasks ever created:", finalTaskCount.toString());
-    const activeTaskCount = await toDoContract.getActiveTaskCount();
-    console.log("Active tasks (non-deleted):", activeTaskCount.toString());
+    const totalTasks = await toDoContract.taskCount();
+    console.log("- Total tasks ever created:", totalTasks.toString());
+    console.log("- Active tasks (non-deleted):", activeTaskCount.toString());
 
     const activeTasksList = await toDoContract.getActiveTasks();
 
@@ -69,8 +73,7 @@ async function main() {
             modifiedCount++;
         }
     }
-
-    console.log("Modified active task count:", modifiedCount);
+    console.log("- Modified active task count:", modifiedCount);
 }
 
 main()
