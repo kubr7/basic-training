@@ -17,7 +17,7 @@ async function askQuestion(query) {
 }
 
 async function main() {
-    console.log("Interacting with contracts...");
+    console.log("\nInteracting with contracts...");
 
     const contractAddress = process.env.TODO_CONTRACT_ADDRESS;
     if (!contractAddress) {
@@ -25,18 +25,16 @@ async function main() {
         return;
     }
 
-    console.log("\nTo-Do Contract Address:", contractAddress);
-
     const toDoContract = await ethers.getContractAt("ToDoContract", contractAddress);
-
     const userTaskCount = await toDoContract.userTaskCountContract();
-    console.log("UserTaskCount Address:", userTaskCount);
 
-    const initialTaskCount = await toDoContract.taskCount();
-    console.log("Initial task count:", initialTaskCount.toString());
-
+    console.log("\nContract Addresses:")
+    console.log("- To-Do Contract Address:", contractAddress);
+    console.log("- UserTaskCount Address:", userTaskCount);
+    
     const activeTaskCount = await toDoContract.getActiveTaskCount();
-    console.log("Active tasks:", activeTaskCount.toString());
+    console.log("\nStatus:");
+    console.log("- Active tasks:", activeTaskCount.toString());
 
     const taskIdStr = await askQuestion("\nEnter the Task ID you want to update: ");
     const taskId = parseInt(taskIdStr);
@@ -67,12 +65,10 @@ async function main() {
         console.log("Current signer is not the assignee of this task. Cannot update status.");
     }
 
-    // Final Summary
     console.log("\nFinal Summary:");
     const totalTasks = await toDoContract.taskCount();
-    console.log("Total tasks ever created:", totalTasks.toString());
-    const activeTasks = await toDoContract.getActiveTaskCount();
-    console.log("Active tasks (non-deleted):", activeTasks.toString());
+    console.log("- Total Tasks [Ever created]:", totalTasks.toString());
+    console.log("- Active Tasks [Non-deleted]:", activeTaskCount.toString());
 
     const activeTasksList = await toDoContract.getActiveTasks();
 
@@ -82,7 +78,6 @@ async function main() {
             modifiedCount++;
         }
     }
-
     console.log("Modified active task count:", modifiedCount);
 }
 
