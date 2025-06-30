@@ -2,7 +2,7 @@ const { ethers } = require("hardhat");
 require("dotenv").config();
 
 async function main() {
-    console.log("Interacting with contracts...");
+    console.log("\nInteracting with contracts...");
 
     const contractAddress = process.env.TODO_CONTRACT_ADDRESS;
     if (!contractAddress) {
@@ -10,24 +10,19 @@ async function main() {
         return;
     }
 
-    console.log("\nTo-Do Contract Address:", contractAddress);
-
     const toDoContract = await ethers.getContractAt("ToDoContract", contractAddress);
+    const userTaskCount = await toDoContract.userTaskCountContract();
+
+    console.log("\nContract Addresses:")
+    console.log("- To-Do Contract Address:", contractAddress);
+    console.log("- UserTaskCount Address:", userTaskCount);
+    
+    const activeTaskCount = await toDoContract.getActiveTaskCount();
+    console.log("\nStatus:");
+    console.log("- Active tasks:", activeTaskCount.toString());
 
     const [signer] = await ethers.getSigners();
     const userAddress = signer.address;
-
-    const userTaskCount = await toDoContract.userTaskCountContract();
-    console.log("UserTaskCount Address:", userTaskCount);
-
-    const initialTaskCount = await toDoContract.taskCount();
-    console.log("\nInitial task count:", initialTaskCount.toString());
-
-    const finalTaskCount = await toDoContract.taskCount();
-    console.log("Total Task after Creation:", finalTaskCount.toString());
-
-    const activeTaskCount = await toDoContract.getActiveTaskCount();
-    console.log("Active tasks:", activeTaskCount.toString());
 
     const activeTasksList = await toDoContract.getActiveTasks();
 
@@ -49,19 +44,18 @@ async function main() {
     });
 
 
-    // Final Summary
     console.log("\nFinal Summary:");
     const totalTasks = await toDoContract.taskCount();
-    console.log("Total tasks ever created:", totalTasks.toString());
-    const activeTasks = await toDoContract.getActiveTaskCount();
-    console.log("Active tasks (non-deleted):", activeTasks.toString());
+    console.log("- Total Tasks [Ever created]:", totalTasks.toString());
+    console.log("- Active Tasks [Non-deleted]:", activeTaskCount.toString());
+
     let modifiedCount = 0;
     for (const task of activeTasksList) {
         if (task.isModified) {
             modifiedCount++;
         }
     }
-    console.log("Modified active task count:", modifiedCount);
+    console.log("- Modified Tasks [Active]:", modifiedCount);
 }
 
 main()
