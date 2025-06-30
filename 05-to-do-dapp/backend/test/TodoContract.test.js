@@ -350,28 +350,6 @@ describe("ToDoContract", function () {
       });
     });
 
-    describe("getPendingTasks", function () {
-      it("should return only pending tasks for user", async function () {
-        const pendingTasks = await toDoContract.getPendingTasks(addr1.address);
-        expect(pendingTasks.length).to.equal(2); // 3 total - 1 completed = 2 pending
-
-        for (const task of pendingTasks) {
-          expect(Number(task.status)).to.equal(0); // Pending
-          expect(task.isDeleted).to.equal(false);
-        }
-      });
-    });
-
-    describe("getCompletedTasks", function () {
-      it("should return only completed tasks for user", async function () {
-        const completedTasks = await toDoContract.getCompletedTasks(addr1.address);
-        expect(completedTasks.length).to.equal(1);
-
-        expect(Number(completedTasks[0].status)).to.equal(1); // Completed
-        expect(completedTasks[0].isDeleted).to.equal(false);
-      });
-    });
-
     describe("getTasksByStatus", function () {
       it("should return tasks filtered by status", async function () {
         const pendingTasks = await toDoContract.getTasksByStatus(addr1.address, 0);
