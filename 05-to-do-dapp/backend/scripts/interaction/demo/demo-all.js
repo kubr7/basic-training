@@ -2,59 +2,95 @@ const { ethers } = require("hardhat");
 require("dotenv").config();
 
 async function main() {
-    console.log("Interacting with contracts...");
+    console.log("🚀 Comprehensive ToDo Contract Demonstration");
+    console.log("=".repeat(60));
 
+    // Contract Setup and Validation
     const contractAddress = process.env.TODO_CONTRACT_ADDRESS;
-
     if (!contractAddress) {
-        console.log("To-Do Contract address is missing in .env file.");
+        console.log("❌ To-Do Contract address is missing in .env file.");
         return;
     }
 
-    console.log("To-Do Contract Address:", contractAddress);
-
     const toDoContract = await ethers.getContractAt("ToDoContract", contractAddress);
-
     const userTaskCount = await toDoContract.userTaskCountContract();
-    console.log("UserTaskCount Address:", userTaskCount);
 
+    console.log("\n📋 Contract Information:");
+    console.log("- To-Do Contract Address:", contractAddress);
+    console.log("- UserTaskCount Address:", userTaskCount);
     
-    console.log("________________________________________________________");
-
+    // Initial Status Check
+    const initialActiveTaskCount = await toDoContract.getActiveTaskCount();
     const initialTaskCount = await toDoContract.taskCount();
-    console.log("Initial task count:", initialTaskCount.toString());
+    console.log("\n📊 Initial Status:");
+    console.log("- Total Tasks (Ever Created):", initialTaskCount.toString());
+    console.log("- Active Tasks (Non-deleted):", initialActiveTaskCount.toString());
 
-    console.log("________________________________________________________");
+    console.log("\n" + "=".repeat(60));
+    console.log("🆕 CREATING SAMPLE TASKS");
+    console.log("=".repeat(60));
 
-    console.log("Creating tasks...");
-
-    const task1 = await toDoContract.createTask(process.env.USER_ADDRESS1, "Complete project documentation", 28062025);
-    await task1.wait();
-    console.log("Task 1 created.");
-
-    const task2 = await toDoContract.createTask(process.env.USER_ADDRESS4, "Write unit tests", 28062025);
-    await task2.wait();
-    console.log("Task 2 created.");
-
-    const task3 = await toDoContract.createTask(process.env.USER_ADDRESS2, "Review interaction script", 29062025);
-    await task3.wait();
-    console.log("Task 3 created.");
-
-    console.log("________________________________________________________");
-
-    const finalTaskCount = await toDoContract.taskCount();
-    console.log("Total Task after Creation:", finalTaskCount.toString());
-
-    const activeTaskCount = await toDoContract.getActiveTaskCount();
-    console.log("Active tasks:", activeTaskCount.toString());
+    // Create multiple tasks to demonstrate functionality
+    console.log("\n📝 Creating sample tasks...");
     
-    console.log("________________________________________________________");
-    // List all created tasks
-    if (finalTaskCount > 0) {
-        console.log("\nTasks Details:");
-        for (let i = 1; i <= finalTaskCount; i++) {
+    const taskData = [
+        {
+            assignee: process.env.USER_ADDRESS1 || "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+            description: "Complete project documentation and user guide",
+            date: 28062025
+        },
+        {
+            assignee: process.env.USER_ADDRESS2 || "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+            description: "Write comprehensive unit tests for all functions",
+            date: 29062025
+        },
+        {
+            assignee: process.env.USER_ADDRESS3 || "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+            description: "Review and optimize smart contract gas usage",
+            date: 30062025
+        },
+        {
+            assignee: process.env.USER_ADDRESS4 || "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+            description: "Deploy to testnet and perform integration testing",
+            date: 1072025
+        },
+        {
+            assignee: process.env.USER_ADDRESS1 || "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+            description: "Prepare presentation materials for demo",
+            date: 2072025
+        }
+    ];
+
+    // Create tasks
+    for (let i = 0; i < taskData.length; i++) {
+        const task = taskData[i];
+        console.log(`\n  Creating Task ${i + 1}: "${task.description}"`);
+        console.log(`  Assigned to: ${task.assignee}`);
+        console.log(`  Due date: ${task.date}`);
+        
+        const tx = await toDoContract.createTask(task.assignee, task.description, task.date);
+        await tx.wait();
+        console.log(`  ✅ Task ${i + 1} created successfully!`);
+    }
+
+    console.log("\n" + "=".repeat(60));
+    console.log("📊 QUERYING AND LISTING TASKS");
+    console.log("=".repeat(60));
+
+    // Get updated counts
+    const currentTaskCount = await toDoContract.taskCount();
+    const currentActiveTaskCount = await toDoContract.getActiveTaskCount();
+    
+    console.log("\n📈 Updated Status:");
+    console.log("- Total Tasks Created:", currentTaskCount.toString());
+    console.log("- Active Tasks:", currentActiveTaskCount.toString());
+
+    // List all tasks
+    console.log("\n📋 All Tasks Details:");
+    if (currentTaskCount > 0) {
+        for (let i = 1; i <= currentTaskCount; i++) {
             const task = await toDoContract.tasks(i);
-            console.log(`Task ${i}:`, {
+            console.log(`\n  Task ${i}:`, {
                 id: task.id.toString(),
                 creator: task.creator,
                 assignedTo: task.assignedTo,
@@ -67,137 +103,246 @@ async function main() {
         }
     }
 
-    console.log("________________________________________________________");
-
-    console.log("\n Getting all users...");
-    const allUsers = await toDoContract.getAllUsers();
-    console.log("All users:", allUsers);
-
-    console.log("\n Tasks created by users:");
-    for (let user of allUsers) {
-        const created = await toDoContract.getAllTaskByUserAsCreator(user);
-        console.log(`User ${user} created ${created.length} task(s)`);
-        created.forEach((task, index) => {
-            console.log(`  #${index + 1}:`, {
+    // List active tasks only
+    console.log("\n🔄 Active Tasks (Non-deleted):");
+    const activeTasksList = await toDoContract.getActiveTasks();
+    if (activeTasksList.length > 0) {
+        activeTasksList.forEach((task, index) => {
+            console.log(`\n  Active Task ${index + 1}:`, {
                 id: task.id.toString(),
+                creator: task.creator,
                 assignedTo: task.assignedTo,
                 description: task.description,
                 date: task.date.toString(),
-                status: Number(task.status) === 0 ? "Pending" : "Completed"
+                status: Number(task.status) === 0 ? "Pending" : "Completed",
+                isModified: task.isModified
             });
         });
     }
 
-    console.log("________________________________________________________");
+    // User Management
+    console.log("\n👥 User Management:");
+    const allUsers = await toDoContract.getAllUsers();
+    console.log("- All Users in System:", allUsers);
+    console.log("- Total Users:", allUsers.length);
 
-    console.log("\nTasks assigned to users:");
-    for (let user of allUsers) {
-        const assigned = await toDoContract.getAllTaskByUserAsAssignee(user);
-        console.log(`User ${user} has ${assigned.length} assigned task(s)`);
-        assigned.forEach((task, index) => {
-            console.log(`  #${index + 1}:`, {
-                id: task.id.toString(),
-                creator: task.creator,
-                description: task.description,
-                date: task.date.toString(),
-                status: Number(task.status) === 0 ? "Pending" : "Completed"
-            });
+    // Tasks by Creator
+    console.log("\n👤 Tasks Grouped by Creator:");
+    for (let i = 0; i < allUsers.length; i++) {
+        const user = allUsers[i];
+        const createdTasks = await toDoContract.getAllTaskByUserAsCreator(user);
+        console.log(`\n  User ${user} created ${createdTasks.length} task(s):`);
+        createdTasks.forEach((task, index) => {
+            console.log(`    #${index + 1}: ID ${task.id.toString()} - "${task.description}" (${Number(task.status) === 0 ? "Pending" : "Completed"})`);
         });
     }
 
-    console.log("________________________________________________________");
+    // Tasks by Assignee
+    console.log("\n🎯 Tasks Grouped by Assignee:");
+    for (let i = 0; i < allUsers.length; i++) {
+        const user = allUsers[i];
+        const assignedTasks = await toDoContract.getAllTaskByUserAsAssignee(user);
+        console.log(`\n  User ${user} has ${assignedTasks.length} assigned task(s):`);
+        assignedTasks.forEach((task, index) => {
+            console.log(`    #${index + 1}: ID ${task.id.toString()} - "${task.description}" (${Number(task.status) === 0 ? "Pending" : "Completed"})`);
+        });
+    }
 
-    // User task counts (via toDoContract)
-    console.log("\nUser task counts:");
-    for (let user of allUsers) {
+    // User Task Counts
+    console.log("\n🔢 User Task Counts:");
+    for (let i = 0; i < allUsers.length; i++) {
+        const user = allUsers[i];
         const count = await toDoContract.getUserTaskCount(user);
-        console.log(`User ${user}: ${count.toString()} task(s)`);
+        console.log(`  ${i + 1}. User ${user}: ${count.toString()} task(s)`);
     }
 
-    console.log("________________________________________________________");
+    // Tasks by Date
+    console.log("\n📅 Tasks by Date:");
+    const dates = [28062025, 29062025, 30062025, 1072025, 2072025];
+    for (const date of dates) {
+        const tasksOnDate = await toDoContract.getTasksByDate(date);
+        const dateStr = date.toString();
+        const formattedDate = `${dateStr.slice(0,2)}-${dateStr.slice(2,4)}-${dateStr.slice(4)}`;
+        console.log(`  ${formattedDate}: ${tasksOnDate.length} task(s)`);
+    }
 
-    console.log("\nGetting tasks by date:");
-    const tasksOn2606 = await toDoContract.getTasksByDate(26062025);
-    const tasksOn2706 = await toDoContract.getTasksByDate(27062025);
-    console.log("Tasks on 26-06-2025:", tasksOn2606.length);
-    console.log("Tasks on 27-06-2025:", tasksOn2706.length);
+    console.log("\n" + "=".repeat(60));
+    console.log("✏️  MODIFYING TASKS");
+    console.log("=".repeat(60));
 
-    if (finalTaskCount >= 1) {
-        console.log("\nModifying Task 1...");
-        const modifyTx = await toDoContract.modifyTask(
-            2,
-            "Updated Task 2 - Write unit tests with all edge cases",
-            28062025
-        );
+    // Modify a task
+    if (currentTaskCount >= 2) {
+        console.log("\n📝 Modifying Task 2...");
+        const taskToModify = 2;
+        const originalTask = await toDoContract.tasks(taskToModify);
+        console.log("  Original:", {
+            description: originalTask.description,
+            date: originalTask.date.toString(),
+            isModified: originalTask.isModified
+        });
+
+        const newDescription = "UPDATED: Write comprehensive unit tests with full coverage and edge cases";
+        const newDate = 30062025;
+        
+        const modifyTx = await toDoContract.modifyTask(taskToModify, newDescription, newDate);
         await modifyTx.wait();
 
-        const modified = await toDoContract.tasks(1);
-        console.log(" Task 1 modified:", {
-            id: modified.id.toString(),
-            description: modified.description,
-            date: modified.date.toString(),
-            isModified: modified.isModified
+        const modifiedTask = await toDoContract.tasks(taskToModify);
+        console.log("  ✅ Modified to:", {
+            description: modifiedTask.description,
+            date: modifiedTask.date.toString(),
+            isModified: modifiedTask.isModified
         });
     }
 
-    console.log("________________________________________________________");
+    console.log("\n" + "=".repeat(60));
+    console.log("🔄 UPDATING TASK STATUS");
+    console.log("=".repeat(60));
 
-    if (finalTaskCount >= 2) {
-        console.log("\nUpdating Task 1 status...");
-        const task1 = await toDoContract.tasks(1);
+    // Update task status (complete a task)
+    if (currentTaskCount >= 1) {
+        console.log("\n✅ Updating Task Status...");
+        const taskToComplete = 1;
+        const taskDetails = await toDoContract.tasks(taskToComplete);
         const [signer] = await ethers.getSigners();
 
-        console.log("Task 1 assigned to:", task1.assignedTo);
-        console.log("Current signer:", signer.address);
+        console.log(`  Task ${taskToComplete} Details:`);
+        console.log("  - Assigned to:", taskDetails.assignedTo);
+        console.log("  - Current signer:", signer.address);
+        console.log(`  - Current status: ${Number(taskDetails.status) === 0 ? "Pending" : "Completed"}`);
 
-        if (signer.address.toLowerCase() === task1.assignedTo.toLowerCase()) {
-            const statusTx = await toDoContract.updateTaskStatus(1, 1);
+        if (signer.address.toLowerCase() === taskDetails.assignedTo.toLowerCase()) {
+            const statusTx = await toDoContract.updateTaskStatus(taskToComplete, 1);
             await statusTx.wait();
-            console.log(" Task 19 marked as completed");
+            console.log(`  ✅ Task ${taskToComplete} marked as completed!`);
         } else {
-            console.log(" Current signer is not the assignee for Task 19, Can't Update");
+            console.log(`  ⚠️  Current signer is not the assignee for Task ${taskToComplete}. Cannot update status.`);
+            console.log("  Note: In a real scenario, you would need to use the correct signer/account.");
         }
     }
 
-    console.log("________________________________________________________");
+    // Show pending vs completed task statistics
+    console.log("\n📊 Task Status Analysis:");
+    const updatedActiveTasksList = await toDoContract.getActiveTasks();
+    let pendingCount = 0;
+    let completedCount = 0;
+    let modifiedCount = 0;
 
-
-    console.log("\nDeleting Task");
-    const taskId = 1;
-    const tx = await toDoContract.deleteTask(taskId);
-    const receipt = await tx.wait();
-    console.log(`Task ${taskId} has been deleted.`);
-
-    for (const event of receipt.events) {
-        try {
-            const parsed = toDoContract.interface.parseLog(event);
-            if (parsed.name === "TaskDeleted") {
-                console.log("Event Emitted -> TaskDeleted:", parsed.args);
-            }
-        } catch (err) {
-            console.log("Error", err.message);
+    for (const task of updatedActiveTasksList) {
+        if (Number(task.status) === 0) {
+            pendingCount++;
+        } else {
+            completedCount++;
+        }
+        if (task.isModified) {
+            modifiedCount++;
         }
     }
 
-    console.log("________________________________________________________");
+    console.log("  - Pending Tasks:", pendingCount);
+    console.log("  - Completed Tasks:", completedCount);
+    console.log("  - Modified Tasks:", modifiedCount);
 
+    console.log("\n" + "=".repeat(60));
+    console.log("🗑️  DELETING TASK");
+    console.log("=".repeat(60));
 
-    console.log("\nFinal Summary:");
-    const totalTasks = await toDoContract.taskCount();
-    const activeTasks = await toDoContract.getActiveTaskCount();
-    console.log("Total tasks ever created:", totalTasks.toString());
-    console.log("Active tasks (non-deleted):", activeTasks.toString());
+    // Delete a task
+    if (currentTaskCount >= 3) {
+        const taskToDelete = 3;
+        console.log(`\n🗑️  Deleting Task ${taskToDelete}...`);
+        
+        const taskBeforeDelete = await toDoContract.tasks(taskToDelete);
+        console.log("  Task to delete:", {
+            id: taskBeforeDelete.id.toString(),
+            description: taskBeforeDelete.description,
+            isDeleted: taskBeforeDelete.isDeleted
+        });
 
-    const updatedUsers = await toDoContract.getAllUsers();
-    console.log("All users:", updatedUsers);
+        const deleteTx = await toDoContract.deleteTask(taskToDelete);
+        await deleteTx.wait();
+        console.log(`  ✅ Task ${taskToDelete} has been deleted!`);
+
+        // Verify deletion
+        const taskAfterDelete = await toDoContract.tasks(taskToDelete);
+        console.log("  Verification - isDeleted:", taskAfterDelete.isDeleted);
+    }
+
+    console.log("\n" + "=".repeat(60));
+    console.log("📊 FINAL COMPREHENSIVE SUMMARY");
+    console.log("=".repeat(60));
+
+    // Final comprehensive summary
+    const finalTaskCount = await toDoContract.taskCount();
+    const finalActiveTaskCount = await toDoContract.getActiveTaskCount();
+    const finalActiveTasksList = await toDoContract.getActiveTasks();
+
+    console.log("\n📈 Overall Statistics:");
+    console.log("- Total Tasks Ever Created:", finalTaskCount.toString());
+    console.log("- Active Tasks (Non-deleted):", finalActiveTaskCount.toString());
+    console.log("- Deleted Tasks:", (finalTaskCount - finalActiveTaskCount).toString());
+
+    // Recalculate final stats
+    let finalPendingCount = 0;
+    let finalCompletedCount = 0;
+    let finalModifiedCount = 0;
+
+    for (const task of finalActiveTasksList) {
+        if (Number(task.status) === 0) {
+            finalPendingCount++;
+        } else {
+            finalCompletedCount++;
+        }
+        if (task.isModified) {
+            finalModifiedCount++;
+        }
+    }
+
+    console.log("\n📊 Active Task Breakdown:");
+    console.log("- Pending Tasks:", finalPendingCount);
+    console.log("- Completed Tasks:", finalCompletedCount);
+    console.log("- Modified Tasks:", finalModifiedCount);
+
+    // Final user statistics
+    const finalUsers = await toDoContract.getAllUsers();
+    console.log("\n👥 User Statistics:");
+    console.log("- Total Users:", finalUsers.length);
+    
+    for (let i = 0; i < finalUsers.length; i++) {
+        const user = finalUsers[i];
+        const userCreatedTasks = await toDoContract.getAllTaskByUserAsCreator(user);
+        const userAssignedTasks = await toDoContract.getAllTaskByUserAsAssignee(user);
+        const userTaskCount = await toDoContract.getUserTaskCount(user);
+        
+        console.log(`\n  User ${i + 1}: ${user}`);
+        console.log(`    - Created: ${userCreatedTasks.length} task(s)`);
+        console.log(`    - Assigned: ${userAssignedTasks.length} task(s)`);
+        console.log(`    - Total Count: ${userTaskCount.toString()} task(s)`);
+    }
+
+    console.log("\n" + "=".repeat(60));
+    console.log("🎉 DEMONSTRATION COMPLETE!");
+    console.log("=".repeat(60));
+    console.log("\n✨ This demonstration showcased:");
+    console.log("  ✅ Task Creation (CRUD - Create)");
+    console.log("  ✅ Task Modification (CRUD - Update)");
+    console.log("  ✅ Task Status Updates");
+    console.log("  ✅ Task Deletion (CRUD - Delete)");
+    console.log("  ✅ Task Querying (CRUD - Read)");
+    console.log("  ✅ User Management");
+    console.log("  ✅ Statistics and Analytics");
+    console.log("  ✅ Date-based Filtering");
+    console.log("  ✅ Status-based Filtering");
+    console.log("  ✅ Contract State Management");
 }
 
 main()
     .then(() => {
-        console.log("\n Done! All contract interactions complete.");
+        console.log("\n🚀 All contract interactions completed successfully!");
         process.exit(0);
     })
     .catch((err) => {
-        console.error("Error occurred:", err.message);
+        console.error("\n❌ Error occurred:", err.message);
+        console.error("Stack:", err.stack);
         process.exit(1);
     });
