@@ -340,12 +340,12 @@ describe("ToDoContract", function () {
       });
     });
 
-    describe("getAllUserTasksByDate", function () {
+    describe("getUserTasksByDate", function () {
       it("should return user's tasks for specific date", async function () {
-        const addr1TasksOnDate1 = await toDoContract.getAllUserTasksByDate(addr1.address, futureDate);
+        const addr1TasksOnDate1 = await toDoContract.getUserTasksByDate(addr1.address, futureDate);
         expect(addr1TasksOnDate1.length).to.equal(2);
 
-        const addr1TasksOnDate2 = await toDoContract.getAllUserTasksByDate(addr1.address, anotherDate);
+        const addr1TasksOnDate2 = await toDoContract.getUserTasksByDate(addr1.address, anotherDate);
         expect(addr1TasksOnDate2.length).to.equal(1);
       });
     });
