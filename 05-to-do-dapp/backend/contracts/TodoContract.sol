@@ -229,23 +229,23 @@ contract ToDoContract {
 
     function getActiveTasks() external view returns (Task[] memory) {
         uint256 activeCount = 0;
-        
+
         for (uint256 i = 1; i <= taskCount; i++) {
             if (tasks[i].id > 0 && !tasks[i].isDeleted) {
                 activeCount++;
             }
         }
-        
+
         Task[] memory result = new Task[](activeCount);
         uint256 resultIndex = 0;
-        
+
         for (uint256 i = 1; i <= taskCount; i++) {
             if (tasks[i].id > 0 && !tasks[i].isDeleted) {
                 result[resultIndex] = tasks[i];
                 resultIndex++;
             }
         }
-        
+
         return result;
     }
 
@@ -319,7 +319,7 @@ contract ToDoContract {
         return result;
     }
 
-    function getAllUserTasksByDate(
+    function getUserTasksByDate(
         address user,
         uint32 _date
     ) external view returns (Task[] memory) {
@@ -371,6 +371,16 @@ contract ToDoContract {
         return result;
     }
 
+    function getUserTaskCount(address user) external view returns (uint256) {
+        return userTaskCountContract.getUserTaskCount(user);
+    }
+
+    function dev_convertDateToTimestamp(
+        uint32 date
+    ) external pure returns (uint256) {
+        return _convertDateToTimestamp(date);
+    }
+
     function _removeTaskId(
         uint256[] storage arr,
         uint256 taskIdToRemove
@@ -413,13 +423,4 @@ contract ToDoContract {
 
         return timestamp;
     }
-
-    function getUserTaskCount(address user) external view returns (uint256) {
-        return userTaskCountContract.getUserTaskCount(user);
-    }
-
-    function dev_convertDateToTimestamp(uint32 date) external pure returns (uint256) {
-        return _convertDateToTimestamp(date);
-    }
-
 }
