@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import "./UserTaskCount.sol";
-
 contract ToDoContract {
     enum TaskStatus {
         Pending,
@@ -24,20 +22,6 @@ contract ToDoContract {
     mapping(uint256 => Task) public tasks;
     mapping(address => uint256[]) public userTaskIds;
     mapping(uint32 => uint256[]) public dateTaskIds;
-    address[] public userList;
-    mapping(address => bool) public userExists;
-
-    UserTaskCount public userTaskCountContract;
-
-    constructor(address _userTaskCountContract) {
-        require(
-            _userTaskCountContract != address(0),
-            "Invalid UserTaskCount address"
-        );
-        userTaskCountContract = UserTaskCount(_userTaskCountContract);
-
-        UserTaskCount(_userTaskCountContract).setTodoContract(address(this));
-    }
 
     event TaskCreated(
         uint256 indexed taskId,
@@ -125,18 +109,6 @@ contract ToDoContract {
 
         dateTaskIds[date].push(taskId);
 
-        if (!userExists[msg.sender]) {
-            userExists[msg.sender] = true;
-            userList.push(msg.sender);
-        }
-
-        if (assignedTo != msg.sender && !userExists[assignedTo]) {
-            userExists[assignedTo] = true;
-            userList.push(assignedTo);
-        }
-
-        userTaskCountContract.updateMapping(assignedTo);
-
         emit TaskCreated(
             taskId,
             msg.sender,
@@ -213,10 +185,6 @@ contract ToDoContract {
         emit TaskStatusUpdated(taskId, msg.sender, newStatus, block.timestamp);
     }
 
-    function getAllUsers() external view returns (address[] memory) {
-        return userList;
-    }
-
     function getActiveTaskCount() external view returns (uint256) {
         uint256 activeCount = 0;
         for (uint256 i = 1; i <= taskCount; i++) {
@@ -249,7 +217,7 @@ contract ToDoContract {
         return result;
     }
 
-    function getAllTaskByUser(
+    function getAllTasksByUser(
         address user
     ) external view returns (Task[] memory) {
         uint256[] memory ids = userTaskIds[user];
@@ -257,54 +225,6 @@ contract ToDoContract {
 
         for (uint256 i = 0; i < ids.length; i++) {
             result[i] = tasks[ids[i]];
-        }
-
-        return result;
-    }
-
-    function getAllTaskByUserAsCreator(
-        address user
-    ) external view returns (Task[] memory) {
-        uint256 count = 0;
-
-        for (uint256 i = 1; i <= taskCount; i++) {
-            if (tasks[i].creator == user && !tasks[i].isDeleted) {
-                count++;
-            }
-        }
-
-        Task[] memory result = new Task[](count);
-        uint256 resultIndex = 0;
-
-        for (uint256 i = 1; i <= taskCount; i++) {
-            if (tasks[i].creator == user && !tasks[i].isDeleted) {
-                result[resultIndex] = tasks[i];
-                resultIndex++;
-            }
-        }
-
-        return result;
-    }
-
-    function getAllTaskByUserAsAssignee(
-        address user
-    ) external view returns (Task[] memory) {
-        uint256 count = 0;
-
-        for (uint256 i = 1; i <= taskCount; i++) {
-            if (tasks[i].assignedTo == user && !tasks[i].isDeleted) {
-                count++;
-            }
-        }
-
-        Task[] memory result = new Task[](count);
-        uint256 resultIndex = 0;
-
-        for (uint256 i = 1; i <= taskCount; i++) {
-            if (tasks[i].assignedTo == user && !tasks[i].isDeleted) {
-                result[resultIndex] = tasks[i];
-                resultIndex++;
-            }
         }
 
         return result;
@@ -369,10 +289,6 @@ contract ToDoContract {
         }
 
         return result;
-    }
-
-    function getUserTaskCount(address user) external view returns (uint256) {
-        return userTaskCountContract.getUserTaskCount(user);
     }
 
     function dev_convertDateToTimestamp(
