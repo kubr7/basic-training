@@ -1,69 +1,70 @@
 const { ethers } = require("hardhat");
-require("dotenv").config();
 
 async function main() {
-    console.log("\nInteracting with contracts...");
+  console.log("\nInteracting with contracts...");
 
-    const contractAddress = process.env.TODO_CONTRACT_ADDRESS;
-    if (!contractAddress) {
-        console.log("To-Do Contract address is missing in .env file.");
-        return;
-    }
+  const contractAddress = process.env.TODO_CONTRACT_ADDRESS;
+  if (!contractAddress) {
+    console.log("To-Do Contract address is missing in .env file.");
+    return;
+  }
 
-    const toDoContract = await ethers.getContractAt("ToDoContract", contractAddress);
-    const userTaskCount = await toDoContract.userTaskCountContract();
+  const toDoContract = await ethers.getContractAt(
+    "ToDoContract",
+    contractAddress
+  );
 
-    console.log("\nContract Addresses:")
-    console.log("- To-Do Contract Address:", contractAddress);
-    console.log("- UserTaskCount Address:", userTaskCount);
-    
-    const activeTaskCount = await toDoContract.getActiveTaskCount();
-    console.log("\nStatus:");
-    console.log("- Active tasks:", activeTaskCount.toString());
+  console.log("\nContract Addresses:");
+  console.log("- To-Do Contract Address:", contractAddress);
 
-    const [signer] = await ethers.getSigners();
-    const userAddress = signer.address;
+  const activeTaskCount = await toDoContract.getActiveTaskCount();
+  console.log("\nStatus:");
+  console.log("- Active tasks:", activeTaskCount.toString());
 
-    const activeTasksList = await toDoContract.getActiveTasks();
+  const [signer] = await ethers.getSigners();
+  const userAddress = signer.address;
 
-    const userTasksAssigned = activeTasksList.filter(
-        (task) => task.assignedTo.toLowerCase() === userAddress.toLowerCase()
-    );
+  const activeTasksList = await toDoContract.getActiveTasks();
 
-    const pendingAssignedTasks = userTasksAssigned.filter(
-        (task) => Number(task.status) === 0 && !task.isDeleted
-    );
+  const userTasksAssigned = activeTasksList.filter(
+    (task) => task.assignedTo.toLowerCase() === userAddress.toLowerCase()
+  );
 
-    console.log(`\nPending tasks assigned to user ${userAddress}: ${pendingAssignedTasks.length}`);
-    pendingAssignedTasks.forEach((task, i) => {
-        console.log(`- Pending Task ${i + 1}:`, {
-            id: task.id.toString(),
-            description: task.description,
-            date: task.date.toString(),
-        });
+  const pendingAssignedTasks = userTasksAssigned.filter(
+    (task) => Number(task.status) === 0 && !task.isDeleted
+  );
+
+  console.log(
+    `\nPending tasks for user ${userAddress}: ${pendingAssignedTasks.length}`
+  );
+  pendingAssignedTasks.forEach((task, i) => {
+    console.log(`- Pending Task ${i + 1}:`, {
+      id: task.id.toString(),
+      description: task.description,
+      date: task.date.toString(),
     });
+  });
 
+  console.log("\nFinal Summary:");
+  const totalTasks = await toDoContract.taskCount();
+  console.log("- Total Tasks [Ever created]:", totalTasks.toString());
+  console.log("- Active Tasks [Non-deleted]:", activeTaskCount.toString());
 
-    console.log("\nFinal Summary:");
-    const totalTasks = await toDoContract.taskCount();
-    console.log("- Total Tasks [Ever created]:", totalTasks.toString());
-    console.log("- Active Tasks [Non-deleted]:", activeTaskCount.toString());
-
-    let modifiedCount = 0;
-    for (const task of activeTasksList) {
-        if (task.isModified) {
-            modifiedCount++;
-        }
+  let modifiedCount = 0;
+  for (const task of activeTasksList) {
+    if (task.isModified) {
+      modifiedCount++;
     }
-    console.log("- Modified Tasks [Active]:", modifiedCount);
+  }
+  console.log("- Modified Tasks [Active]:", modifiedCount);
 }
 
 main()
-    .then(() => {
-        console.log("\nDone! All contract interactions complete.");
-        process.exit(0);
-    })
-    .catch((err) => {
-        console.error("Error occurred:", err.message);
-        process.exit(1);
-    });
+  .then(() => {
+    console.log("\nDone! All contract interactions complete.");
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error("Error occurred:", err.message);
+    process.exit(1);
+  });

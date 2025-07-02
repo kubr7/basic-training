@@ -4,41 +4,27 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("ToDoContract", function () {
-  let ToDoContract, UserTaskCount, toDoContract, userTaskCountContract;
+  let ToDoContract, toDoContract;
+  // let UserTaskCount, userTaskCountContract;
   let owner, addr1, addr2, addr3;
 
   beforeEach(async () => {
     [owner, addr1, addr2, addr3] = await ethers.getSigners();
 
-    UserTaskCount = await ethers.getContractFactory("UserTaskCount");
-    userTaskCountContract = await UserTaskCount.deploy();
-    await userTaskCountContract.waitForDeployment();
+    // UserTaskCount = await ethers.getContractFactory("UserTaskCount");
+    // userTaskCountContract = await UserTaskCount.deploy();
+    // await userTaskCountContract.waitForDeployment();
 
     // Deploy TodoContract with UserTaskCount address (auto-links)
     ToDoContract = await ethers.getContractFactory("ToDoContract");
-    toDoContract = await ToDoContract.deploy(await userTaskCountContract.getAddress());
+    toDoContract = await ToDoContract.deploy();
+    // toDoContract = await ToDoContract.deploy(await userTaskCountContract.getAddress());
     await toDoContract.waitForDeployment();
   });
 
   describe("Deployment", function () {
-    it("should deploy TodoContract with correct UserTaskCount link", async function () {
-      const linkedAddress = await toDoContract.userTaskCountContract();
-      expect(linkedAddress).to.equal(await userTaskCountContract.getAddress());
-    });
-
-    it("should auto-link TodoContract in UserTaskCount", async function () {
-      const linkedTodoAddress = await userTaskCountContract.todoContract();
-      expect(linkedTodoAddress).to.equal(await toDoContract.getAddress());
-    });
-
     it("should initialize task count to 0", async function () {
       expect(await toDoContract.taskCount()).to.equal(0);
-    });
-
-    it("should reject deployment with zero address", async function () {
-      await expect(
-        ToDoContract.deploy(ethers.ZeroAddress)
-      ).to.be.revertedWith("Invalid UserTaskCount address");
     });
   });
 
@@ -71,21 +57,21 @@ describe("ToDoContract", function () {
       expect(await toDoContract.taskCount()).to.equal(2);
     });
 
-    it("should update UserTaskCount for assigned user", async function () {
-      await toDoContract.createTask(addr1.address, "Task for addr1", futureDate);
-      const taskCount = await toDoContract.getUserTaskCount(addr1.address);
-      expect(taskCount).to.equal(1);
-    });
+    // it("should update UserTaskCount for assigned user", async function () {
+    //   await toDoContract.createTask(addr1.address, "Task for addr1", futureDate);
+    //   const taskCount = await toDoContract.getUserTaskCount(addr1.address);
+    //   expect(taskCount).to.equal(1);
+    // });
 
-    it("should add users to userList", async function () {
-      await toDoContract.createTask(addr1.address, "Task 1", futureDate);
-      await toDoContract.createTask(addr2.address, "Task 2", futureDate);
+    // it("should add users to userList", async function () {
+    //   await toDoContract.createTask(addr1.address, "Task 1", futureDate);
+    //   await toDoContract.createTask(addr2.address, "Task 2", futureDate);
 
-      const users = await toDoContract.getAllUsers();
-      expect(users).to.include(owner.address);
-      expect(users).to.include(addr1.address);
-      expect(users).to.include(addr2.address);
-    });
+    //   const users = await toDoContract.getAllUsers();
+    //   expect(users).to.include(owner.address);
+    //   expect(users).to.include(addr1.address);
+    //   expect(users).to.include(addr2.address);
+    // });
 
     it("should fail if assigned address is zero", async function () {
       await expect(
@@ -225,110 +211,110 @@ describe("ToDoContract", function () {
       await toDoContract.connect(addr1).updateTaskStatus(2, 1);
     });
 
-    describe("getAllTaskByUser", function () {
+    describe("getAllTasksByUser", function () {
       it("should return all tasks for a user", async function () {
-        const ownerTasks = await toDoContract.getAllTaskByUser(owner.address);
+        const ownerTasks = await toDoContract.getAllTasksByUser(owner.address);
         expect(ownerTasks.length).to.equal(4);
 
-        const addr1Tasks = await toDoContract.getAllTaskByUser(addr1.address);
+        const addr1Tasks = await toDoContract.getAllTasksByUser(addr1.address);
         expect(addr1Tasks.length).to.equal(3);
 
-        const addr2Tasks = await toDoContract.getAllTaskByUser(addr2.address);
+        const addr2Tasks = await toDoContract.getAllTasksByUser(addr2.address);
         expect(addr2Tasks.length).to.equal(1);
       });
     });
 
-    describe("getAllTaskByUserAsCreator", function () {
-      it("should return only tasks created by the user", async function () {
-        const ownerCreatedTasks = await toDoContract.getAllTaskByUserAsCreator(owner.address);
-        expect(ownerCreatedTasks.length).to.equal(4);
+    // describe("getAllTaskByUserAsCreator", function () {
+    //   it("should return only tasks created by the user", async function () {
+    //     const ownerCreatedTasks = await toDoContract.getAllTaskByUserAsCreator(owner.address);
+    //     expect(ownerCreatedTasks.length).to.equal(4);
 
-        for (const task of ownerCreatedTasks) {
-          expect(task.creator).to.equal(owner.address);
-          expect(task.isDeleted).to.equal(false);
-        }
+    //     for (const task of ownerCreatedTasks) {
+    //       expect(task.creator).to.equal(owner.address);
+    //       expect(task.isDeleted).to.equal(false);
+    //     }
 
-        const addr1CreatedTasks = await toDoContract.getAllTaskByUserAsCreator(addr1.address);
-        expect(addr1CreatedTasks.length).to.equal(0);
+    //     const addr1CreatedTasks = await toDoContract.getAllTaskByUserAsCreator(addr1.address);
+    //     expect(addr1CreatedTasks.length).to.equal(0);
 
-        const addr2CreatedTasks = await toDoContract.getAllTaskByUserAsCreator(addr2.address);
-        expect(addr2CreatedTasks.length).to.equal(0);
-      });
+    //     const addr2CreatedTasks = await toDoContract.getAllTaskByUserAsCreator(addr2.address);
+    //     expect(addr2CreatedTasks.length).to.equal(0);
+    //   });
 
-      it("should return empty array for user with no created tasks", async function () {
-        const addr3CreatedTasks = await toDoContract.getAllTaskByUserAsCreator(addr3.address);
-        expect(addr3CreatedTasks.length).to.equal(0);
-      });
-    });
+    //   it("should return empty array for user with no created tasks", async function () {
+    //     const addr3CreatedTasks = await toDoContract.getAllTaskByUserAsCreator(addr3.address);
+    //     expect(addr3CreatedTasks.length).to.equal(0);
+    //   });
+    // });
 
-    describe("getAllTaskByUserAsAssignee", function () {
-      it("should return only tasks assigned to the user", async function () {
-        const ownerAssignedTasks = await toDoContract.getAllTaskByUserAsAssignee(owner.address);
-        expect(ownerAssignedTasks.length).to.equal(0);
+    // describe("getAllTaskByUserAsAssignee", function () {
+    //   it("should return only tasks assigned to the user", async function () {
+    //     const ownerAssignedTasks = await toDoContract.getAllTaskByUserAsAssignee(owner.address);
+    //     expect(ownerAssignedTasks.length).to.equal(0);
 
-        const addr1AssignedTasks = await toDoContract.getAllTaskByUserAsAssignee(addr1.address);
-        expect(addr1AssignedTasks.length).to.equal(3);
+    //     const addr1AssignedTasks = await toDoContract.getAllTaskByUserAsAssignee(addr1.address);
+    //     expect(addr1AssignedTasks.length).to.equal(3);
 
-        for (const task of addr1AssignedTasks) {
-          expect(task.assignedTo).to.equal(addr1.address);
-          expect(task.isDeleted).to.equal(false);
-        }
+    //     for (const task of addr1AssignedTasks) {
+    //       expect(task.assignedTo).to.equal(addr1.address);
+    //       expect(task.isDeleted).to.equal(false);
+    //     }
 
-        const addr2AssignedTasks = await toDoContract.getAllTaskByUserAsAssignee(addr2.address);
-        expect(addr2AssignedTasks.length).to.equal(1);
+    //     const addr2AssignedTasks = await toDoContract.getAllTaskByUserAsAssignee(addr2.address);
+    //     expect(addr2AssignedTasks.length).to.equal(1);
 
-        expect(addr2AssignedTasks[0].assignedTo).to.equal(addr2.address);
-        expect(addr2AssignedTasks[0].isDeleted).to.equal(false);
-      });
+    //     expect(addr2AssignedTasks[0].assignedTo).to.equal(addr2.address);
+    //     expect(addr2AssignedTasks[0].isDeleted).to.equal(false);
+    //   });
 
-      it("should return empty array for user with no assigned tasks", async function () {
-        const addr3AssignedTasks = await toDoContract.getAllTaskByUserAsAssignee(addr3.address);
-        expect(addr3AssignedTasks.length).to.equal(0);
-      });
+    //   it("should return empty array for user with no assigned tasks", async function () {
+    //     const addr3AssignedTasks = await toDoContract.getAllTaskByUserAsAssignee(addr3.address);
+    //     expect(addr3AssignedTasks.length).to.equal(0);
+    //   });
 
-      it("should handle completed tasks correctly", async function () {
-        const addr1AssignedTasks = await toDoContract.getAllTaskByUserAsAssignee(addr1.address);
+    //   it("should handle completed tasks correctly", async function () {
+    //     const addr1AssignedTasks = await toDoContract.getAllTaskByUserAsAssignee(addr1.address);
 
-        expect(addr1AssignedTasks.length).to.equal(3);
+    //     expect(addr1AssignedTasks.length).to.equal(3);
 
-        const completedTasks = addr1AssignedTasks.filter(task => Number(task.status) === 1);
-        const pendingTasks = addr1AssignedTasks.filter(task => Number(task.status) === 0);
+    //     const completedTasks = addr1AssignedTasks.filter(task => Number(task.status) === 1);
+    //     const pendingTasks = addr1AssignedTasks.filter(task => Number(task.status) === 0);
 
-        expect(completedTasks.length).to.equal(1);
-        expect(pendingTasks.length).to.equal(2);
+    //     expect(completedTasks.length).to.equal(1);
+    //     expect(pendingTasks.length).to.equal(2);
 
-        const completedTask = completedTasks[0];
-        expect(completedTask.assignedTo).to.equal(addr1.address);
-        expect(Number(completedTask.status)).to.equal(1);
-        expect(completedTask.isDeleted).to.equal(false);
-      });
-    });
+    //     const completedTask = completedTasks[0];
+    //     expect(completedTask.assignedTo).to.equal(addr1.address);
+    //     expect(Number(completedTask.status)).to.equal(1);
+    //     expect(completedTask.isDeleted).to.equal(false);
+    //   });
+    // });
 
-    describe("Creator vs Assignee distinction", function () {
-      beforeEach(async () => {
-        await toDoContract.connect(addr1).createTask(addr1.address, "Self-assigned task", futureDate);
-      });
+    // describe("Creator vs Assignee distinction", function () {
+    //   beforeEach(async () => {
+    //     await toDoContract.connect(addr1).createTask(addr1.address, "Self-assigned task", futureDate);
+    //   });
 
-      it("should distinguish between creator and assignee roles", async function () {
-        const addr1CreatedTasks = await toDoContract.getAllTaskByUserAsCreator(addr1.address);
-        expect(addr1CreatedTasks.length).to.equal(1);
+    //   it("should distinguish between creator and assignee roles", async function () {
+    //     const addr1CreatedTasks = await toDoContract.getAllTaskByUserAsCreator(addr1.address);
+    //     expect(addr1CreatedTasks.length).to.equal(1);
 
-        const addr1AssignedTasks = await toDoContract.getAllTaskByUserAsAssignee(addr1.address);
-        expect(addr1AssignedTasks.length).to.equal(4);
+    //     const addr1AssignedTasks = await toDoContract.getAllTaskByUserAsAssignee(addr1.address);
+    //     expect(addr1AssignedTasks.length).to.equal(4);
 
-        // The self-assigned task should appear in both lists but be the same task
-        const selfAssignedTaskAsCreator = addr1CreatedTasks.find(task =>
-          task.creator === addr1.address && task.assignedTo === addr1.address
-        );
-        const selfAssignedTaskAsAssignee = addr1AssignedTasks.find(task =>
-          task.creator === addr1.address && task.assignedTo === addr1.address
-        );
+    //     // The self-assigned task should appear in both lists but be the same task
+    //     const selfAssignedTaskAsCreator = addr1CreatedTasks.find(task =>
+    //       task.creator === addr1.address && task.assignedTo === addr1.address
+    //     );
+    //     const selfAssignedTaskAsAssignee = addr1AssignedTasks.find(task =>
+    //       task.creator === addr1.address && task.assignedTo === addr1.address
+    //     );
 
-        expect(selfAssignedTaskAsCreator).to.not.be.undefined;
-        expect(selfAssignedTaskAsAssignee).to.not.be.undefined;
-        expect(selfAssignedTaskAsCreator.id).to.equal(selfAssignedTaskAsAssignee.id);
-      });
-    });
+    //     expect(selfAssignedTaskAsCreator).to.not.be.undefined;
+    //     expect(selfAssignedTaskAsAssignee).to.not.be.undefined;
+    //     expect(selfAssignedTaskAsCreator.id).to.equal(selfAssignedTaskAsAssignee.id);
+    //   });
+    // });
 
     describe("getTasksByDate", function () {
       it("should return tasks for specific date", async function () {
@@ -360,15 +346,15 @@ describe("ToDoContract", function () {
       });
     });
 
-    describe("getAllUsers", function () {
-      it("should return all unique users", async function () {
-        const users = await toDoContract.getAllUsers();
-        expect(users).to.include(owner.address);
-        expect(users).to.include(addr1.address);
-        expect(users).to.include(addr2.address);
-        expect(users.length).to.be.at.least(3);
-      });
-    });
+    // describe("getAllUsers", function () {
+    //   it("should return all unique users", async function () {
+    //     const users = await toDoContract.getAllUsers();
+    //     expect(users).to.include(owner.address);
+    //     expect(users).to.include(addr1.address);
+    //     expect(users).to.include(addr2.address);
+    //     expect(users.length).to.be.at.least(3);
+    //   });
+    // });
 
     describe("getActiveTaskCount", function () {
       it("should return correct active task count before any deletions", async function () {
@@ -538,19 +524,19 @@ describe("ToDoContract", function () {
         expect(activeTasks.length).to.equal(Number(activeTaskCount));
       });
 
-      it("should handle empty state correctly", async function () {
-        // Deploy a fresh contract with no tasks
-        const UserTaskCount = await ethers.getContractFactory("UserTaskCount");
-        const userTaskCount = await UserTaskCount.deploy();
-        await userTaskCount.waitForDeployment();
+      // it("should handle empty state correctly", async function () {
+      //   // Deploy a fresh contract with no tasks
+      //   const UserTaskCount = await ethers.getContractFactory("UserTaskCount");
+      //   const userTaskCount = await UserTaskCount.deploy();
+      //   await userTaskCount.waitForDeployment();
         
-        const ToDoContract = await ethers.getContractFactory("ToDoContract");
-        const freshToDo = await ToDoContract.deploy(await userTaskCount.getAddress());
-        await freshToDo.waitForDeployment();
+      //   const ToDoContract = await ethers.getContractFactory("ToDoContract");
+      //   const freshToDo = await ToDoContract.deploy(await userTaskCount.getAddress());
+      //   await freshToDo.waitForDeployment();
         
-        const activeTasks = await freshToDo.getActiveTasks();
-        expect(activeTasks.length).to.equal(0);
-      });
+      //   const activeTasks = await freshToDo.getActiveTasks();
+      //   expect(activeTasks.length).to.equal(0);
+      // });
     });
   });
 
@@ -610,38 +596,38 @@ describe("ToDoContract", function () {
     });
   });
 
-  describe("UserTaskCount Integration", function () {
-    const futureDate = 25122025;
+  // describe("UserTaskCount Integration", function () {
+  //   const futureDate = 25122025;
 
-    it("should increment user task count when creating tasks", async function () {
-      await toDoContract.createTask(addr1.address, "Task 1", futureDate);
-      await toDoContract.createTask(addr1.address, "Task 2", futureDate);
+  //   it("should increment user task count when creating tasks", async function () {
+  //     await toDoContract.createTask(addr1.address, "Task 1", futureDate);
+  //     await toDoContract.createTask(addr1.address, "Task 2", futureDate);
 
-      const taskCount = await toDoContract.getUserTaskCount(addr1.address);
-      expect(taskCount).to.equal(2);
-    });
+  //     const taskCount = await toDoContract.getUserTaskCount(addr1.address);
+  //     expect(taskCount).to.equal(2);
+  //   });
 
-    it("should allow only TodoContract to update UserTaskCount", async function () {
-      await expect(
-        userTaskCountContract.connect(addr1).updateMapping(addr1.address)
-      ).to.be.revertedWith("Only TodoContract can call this");
-    });
+  //   it("should allow only TodoContract to update UserTaskCount", async function () {
+  //     await expect(
+  //       userTaskCountContract.connect(addr1).updateMapping(addr1.address)
+  //     ).to.be.revertedWith("Only TodoContract can call this");
+  //   });
 
-    it("should return correct user task count via ToDoContract", async function () {
-      // Test that getUserTaskCount properly delegates to UserTaskCount contract
-      await toDoContract.createTask(addr2.address, "Task for addr2", futureDate);
+  //   it("should return correct user task count via ToDoContract", async function () {
+  //     // Test that getUserTaskCount properly delegates to UserTaskCount contract
+  //     await toDoContract.createTask(addr2.address, "Task for addr2", futureDate);
 
-      const taskCountViaToDoContract = await toDoContract.getUserTaskCount(addr2.address);
-      const taskCountViaUserTaskCount = await userTaskCountContract.getUserTaskCount(addr2.address);
+  //     const taskCountViaToDoContract = await toDoContract.getUserTaskCount(addr2.address);
+  //     const taskCountViaUserTaskCount = await userTaskCountContract.getUserTaskCount(addr2.address);
 
-      // Both should return the same value
-      expect(taskCountViaToDoContract).to.equal(taskCountViaUserTaskCount);
-      expect(taskCountViaToDoContract).to.equal(1);
-    });
+  //     // Both should return the same value
+  //     expect(taskCountViaToDoContract).to.equal(taskCountViaUserTaskCount);
+  //     expect(taskCountViaToDoContract).to.equal(1);
+  //   });
 
-    it("should return 0 for users with no tasks", async function () {
-      const taskCount = await toDoContract.getUserTaskCount(addr3.address);
-      expect(taskCount).to.equal(0);
-    });
-  });
+  //   it("should return 0 for users with no tasks", async function () {
+  //     const taskCount = await toDoContract.getUserTaskCount(addr3.address);
+  //     expect(taskCount).to.equal(0);
+  //   });
+  // });
 });

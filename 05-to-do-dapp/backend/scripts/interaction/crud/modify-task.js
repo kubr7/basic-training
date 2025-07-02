@@ -1,5 +1,4 @@
 const { ethers } = require("hardhat");
-require("dotenv").config();
 const readline = require("readline");
 
 async function askQuestion(query) {
@@ -26,11 +25,9 @@ async function main() {
     }
 
     const toDoContract = await ethers.getContractAt("ToDoContract", contractAddress);
-    const userTaskCount = await toDoContract.userTaskCountContract();
 
     console.log("\nContract Addresses:")
     console.log("- To-Do Contract Address:", contractAddress);
-    console.log("- UserTaskCount Address:", userTaskCount);
     
     const activeTaskCount = await toDoContract.getActiveTaskCount();
     console.log("\nStatus:");

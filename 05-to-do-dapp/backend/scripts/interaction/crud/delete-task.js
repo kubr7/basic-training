@@ -1,5 +1,4 @@
 const { ethers } = require("hardhat");
-require("dotenv").config();
 const readline = require("readline");
 
 async function askQuestion(query) {
