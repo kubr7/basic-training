@@ -102,10 +102,7 @@ contract ToDoContract {
         task.isDeleted = false;
         task.isModified = false;
 
-        userTaskIds[msg.sender].push(taskId);
-        if (msg.sender != assignedTo) {
-            userTaskIds[assignedTo].push(taskId);
-        }
+        userTaskIds[assignedTo].push(taskId);
 
         dateTaskIds[date].push(taskId);
 
