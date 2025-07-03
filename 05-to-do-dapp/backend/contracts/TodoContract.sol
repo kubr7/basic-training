@@ -291,12 +291,6 @@ contract ToDoContract {
         return result;
     }
 
-    function dev_convertDateToTimestamp(
-        uint32 date
-    ) external pure returns (uint256) {
-        return _convertDateToTimestamp(date);
-    }
-
     function _removeTaskId(
         uint256[] storage arr,
         uint256 taskIdToRemove
