@@ -7,8 +7,7 @@ async function main() {
 
     const contract = ToDoContractV2.attach(proxyAddress);
 
-    const totalTasks = contract.getTotalTaskCount();
-    // console.log(`Total tasks: ${totalTasks.toString()}`);
+    const totalTasks = await contract.getTotalTaskCount();
     console.log("Total tasks:", totalTasks.toString());
 }
 
