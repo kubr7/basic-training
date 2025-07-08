@@ -9,7 +9,7 @@ async function main() {
   console.log("Contract upgraded.. New implementation at:", upgraded.address);
   
   const newImplAddress = await upgrades.erc1967.getImplementationAddress(proxyAddress);
-  console.log("🆕 New implementation logic address:", newImplAddress);
+  console.log("New implementation logic address:", newImplAddress);
 }
 
 main().catch((error) => {
