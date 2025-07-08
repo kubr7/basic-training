@@ -18,7 +18,6 @@ async function main() {
   const impl = await upgrades.erc1967.getImplementationAddress(proxyAddress);
   console.log("Logic/Implementation deployed at:", impl);
 
-
   return {
     proxyAddress: proxyAddress,
     contract: proxy,
