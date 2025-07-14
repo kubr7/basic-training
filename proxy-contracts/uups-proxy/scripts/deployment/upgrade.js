@@ -8,6 +8,8 @@ async function main() {
   const upgraded = await upgrades.upgradeProxy(proxyAddress, ToDoContractV2);
 
   console.log("Upgrade completed. Proxy address:", upgraded.target);
+  const implAddress = await upgrades.erc1967.getImplementationAddress(upgraded.address);
+  console.log("New Implementation Address:", implAddress);
 }
 
 main().catch((error) => {
