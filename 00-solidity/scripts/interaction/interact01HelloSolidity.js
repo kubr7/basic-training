@@ -6,7 +6,7 @@ async function main() {
     console.log("Interacting with HelloSolidity Smart Contract...");
     const contractAddress = process.env.HELLO_SOLIDITY_CONTRACT_ADDRESS;
     if (!contractAddress) {
-        throw new Error("TODO_CONTRACT_ADDRESS not found in environment variables");
+        throw new Error("HELLO_SOLIDITY_CONTRACT_ADDRESS not found in environment variables");
     }
     console.log("HelloSolidity Address:", contractAddress);
     const helloSolidity = await ethers.getContractAt("HelloSolidity", contractAddress);

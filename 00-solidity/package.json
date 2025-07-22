@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy:helloSolidity": "npx hardhat run scripts/deployment/deploy01HelloSolidity.js --network sepolia",
+    "depoly:counter": "npx hardhat run scripts/deployment/deploy02Counter.js --network sepolia",
+    "interact:helloSolidity": "npx hardhat run scripts/interaction/interact01HelloSolidity.js --network sepolia",
+    "interact:counter": "npx hardhat run scripts/interaction/interact02Counter.js --network sepolia"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +20,7 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^6.0.0",
     "hardhat-contract-sizer": "^2.10.0",
-    "hardhat-gas-reporter": "^2.3.0"
+    "hardhat-gas-reporter": "^2.3.0",
+    "solidity-coverage": "^0.8.16"
   }
 }
