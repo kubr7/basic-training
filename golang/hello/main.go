@@ -7,6 +7,6 @@ import (
 )
 
 func main() {
-	result := greetings.Hello("Parijat")
+	result := greetings.Hello("7")
 	fmt.Println(result)
 }
