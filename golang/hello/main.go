@@ -11,7 +11,8 @@ func main() {
 	log.SetPrefix("greetings: ")
 	log.SetFlags(0)
 
-	result, err := greetings.Hello("Seven")
+	names := []string{"May", "June", "July"}
+	result, err := greetings.Hellos(names)
 
 	if err != nil {
 		log.Fatal(err)
