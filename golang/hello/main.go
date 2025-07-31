@@ -2,11 +2,20 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"greetings"
 )
 
 func main() {
-	result := greetings.Hello("7")
+	log.SetPrefix("greetings: ")
+	log.SetFlags(0)
+
+	result, err := greetings.Hello("Seven")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Println(result)
 }
