@@ -41,7 +41,7 @@ contract EtherWalletTest is Test {
         assertEq(wallet.getBalance(), 2 ether);
     }
 
-    function testFailWithdrawAsNonOwner() public {
+    function test_RevertWhen_WithdrawAsNonOwner() public {
         vm.deal(user1, 5 ether);
         vm.prank(user1);
         (bool sent, ) = address(wallet).call{value: 5 ether}("");
@@ -49,6 +49,7 @@ contract EtherWalletTest is Test {
 
         // Try withdrawing as non-owner (should fail)
         vm.prank(user1);
+        vm.expectRevert("Caller is not owner");
         wallet.withdraw(1 ether);
     }
 }
