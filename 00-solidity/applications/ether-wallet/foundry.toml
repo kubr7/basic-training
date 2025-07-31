@@ -12,5 +12,5 @@ sepolia = "${SEPOLIA_RPC_URL}"
 sepolia = { key = "${ETHERSCAN_API_KEY}" }
 
 # Private key for deployment
-[env]
+[profile.env]
 PRIVATE_KEY = "${PRIVATE_KEY}"
