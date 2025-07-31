@@ -5,14 +5,15 @@ contract EtherWallet {
     address payable public owner;
 
     constructor() {
-        owner = msg.sender;
+        owner = payable(msg.sender);
     }
 
     receive() external payable {}
 
     function withdraw(uint256 _amount) external {
         require(msg.sender == owner, "Caller is not owner");
-        payable(msg.sender).transfer(_amount);
+        (bool success, ) = owner.call{value: _amount}("");
+        require(success, "Transfer failed");
     }
 
     function getBalance() external view returns(uint256) {
