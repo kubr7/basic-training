@@ -2,25 +2,25 @@ package main
 
 import "fmt"
 
-func zeroval(ival int) {
-	fmt.Printf("zeroval received: %d\n", ival)
-	ival = 0
+func value(val int) {
+	fmt.Printf("value received: %d\n", val)
+	val = 0
 }
 
-func zeroptr(iptr *int) {
-	fmt.Printf("zeroptr received: %d\n", *iptr)
-	*iptr = 0
+func pointer(ptr *int) {
+	fmt.Printf("pointer received: %d\n", *ptr)
+	*ptr = 0
 }
 
 func main() {
 	i := 1
-	fmt.Println("initial:", i)
+	fmt.Println("Initial value:", i)
 
-	zeroval(i)
-	fmt.Println("zeroval:", i)
+	value(i)
+	fmt.Println("Value after function call:", i)
 
-	zeroptr(&i)
-	fmt.Println("zeroptr:", i)
+	pointer(&i)
+	fmt.Println("Pointer after function call:", i)
 
-	fmt.Println("pointer:", &i)
+	fmt.Println("Pointer after function call:", &i)
 }
