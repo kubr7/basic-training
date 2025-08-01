@@ -11,22 +11,30 @@ func main() {
 	}
 	fmt.Println("sum:", sum)
 
+	fmt.Println("--------------------------------")
+
 	for i, num := range nums {
 		if num == 3 {
 			fmt.Println("index:", i)
 		}
 	}
 
-	kvs := map[string]string{"A": "apple", "B": "banana"}
-	for k, v := range kvs {
-		fmt.Printf("%s -> %s\n", k, v)
+	fmt.Println("--------------------------------")
+
+	store := map[string]int{"Apple": 1, "Banana": 2, "Cherry": 3}
+	for fruit, quantity := range store {
+		fmt.Printf("%s -> %d\n", fruit, quantity)
 	}
 
-	for k := range kvs {
-		fmt.Println("key:", k)
+	fmt.Println("--------------------------------")
+
+	for fruit := range store {
+		fmt.Println("fruit:", fruit)
 	}
+
+	fmt.Println("--------------------------------")
 
 	for i, c := range "go" {
-		fmt.Println("index:", i, "character:", string(c))
+		fmt.Println("At index:", i, "--> Character is:", string(c))
 	}
 }
