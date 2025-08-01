@@ -2,38 +2,43 @@ package main
 
 import "fmt"
 
-type person struct {
-	name string
-	age  int
+type Player struct {
+	name  string
+	run   int
+	balls int
+	fours int
+	sixes int
 }
 
-func newPerson(name string) *person {
+func newPlayer(name string) *Player {
 
-	p := person{name: name}
-	p.age = 42
+	p := Player{name: name}
+	p.run = 9
+	p.balls = 13
+	p.fours = 1
+	p.sixes = 0
 	return &p
 }
 
 func main() {
 
-	fmt.Println(person{"Bob", 20})
+	fmt.Println(Player{"Jaiswal", 2, 9, 0, 0})
+	fmt.Println(Player{name: "Rahul", balls: 40, run: 14, fours: 1, sixes: 0})
+	fmt.Println(Player{name: "Sai", balls: 108, run: 38, fours: 6, sixes: 0})
+	fmt.Println(Player{name: "Gill", balls: 35, run: 21, fours: 4, sixes: 0})
+	fmt.Println(newPlayer("Jadeja"))
 
-	fmt.Println(person{name: "Alice", age: 30})
-
-	fmt.Println(person{name: "Fred"})
-
-	fmt.Println(&person{name: "Ann", age: 40})
-
-	fmt.Println(newPerson("Jon"))
-
-	s := person{name: "Sean", age: 50}
+	s := Player{name: "Nair", balls: 109, run: 50, fours: 8, sixes: 0}
 	fmt.Println(s.name)
 
 	sp := &s
-	fmt.Println(sp.age)
+	fmt.Println(sp.run)
+	fmt.Println(sp.balls)
+	fmt.Println(sp.fours)
+	fmt.Println(sp.sixes)
 
-	sp.age = 51
-	fmt.Println(sp.age)
+	sp.run = 51
+	fmt.Println(sp.run)
 
 	dog := struct {
 		name   string
