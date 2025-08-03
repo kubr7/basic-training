@@ -12,6 +12,8 @@ func main() {
 	c2 := make(chan string, 2)
 	c2 <- "Go"
 	c2 <- "Lang"
+	// c2 <- "Language"
 	fmt.Println(<-c2)
 	fmt.Println(<-c2)
+	// fmt.Println(<-c2)
 }
