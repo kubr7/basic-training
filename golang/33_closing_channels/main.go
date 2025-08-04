@@ -30,4 +30,5 @@ func main() {
 
 	_, ok := <-jobs
 	fmt.Println("received more jobs:", ok)
+
 }
