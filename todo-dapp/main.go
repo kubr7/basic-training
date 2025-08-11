@@ -7,20 +7,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/big"
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
+
 	"syscall"
 	"time"
 
 	_ "github.com/lib/pq"
 
-	contracts "github.com/kubr7/todo-dapp/contract"
+	contract "github.com/kubr7/todo-dapp/contract"
 
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -34,23 +32,11 @@ var (
 	dbURL        string
 	privateKey   string
 
-	parsedABI *abi.ABI
+	todoContract *contract.Contract
 )
 
-// Task struct maps to solidity Task tuple
-type Task struct {
-	Id          *big.Int
-	Creator     common.Address
-	AssignedTo  common.Address
-	Description string
-	Date        uint32
-	Status      uint8
-	IsDeleted   bool
-	IsModified  bool
-}
-
-// utility: convert Task -> JSON-friendly map
-func taskToMap(t Task) map[string]interface{} {
+// utility: convert ToDoContractTask -> JSON-friendly map
+func taskToMap(t contract.ToDoContractTask) map[string]interface{} {
 	return map[string]interface{}{
 		"id":          t.Id.String(),
 		"creator":     t.Creator.Hex(),
@@ -61,24 +47,6 @@ func taskToMap(t Task) map[string]interface{} {
 		"isDeleted":   t.IsDeleted,
 		"isModified":  t.IsModified,
 	}
-}
-
-// utility: convert interface{} result to Task
-func interfaceToTask(taskData interface{}) (Task, bool) {
-	if slice, ok := taskData.([]interface{}); ok && len(slice) >= 8 {
-		task := Task{
-			Id:          slice[0].(*big.Int),
-			Creator:     slice[1].(common.Address),
-			AssignedTo:  slice[2].(common.Address),
-			Description: slice[3].(string),
-			Date:        slice[4].(uint32),
-			Status:      slice[5].(uint8),
-			IsDeleted:   slice[6].(bool),
-			IsModified:  slice[7].(bool),
-		}
-		return task, true
-	}
-	return Task{}, false
 }
 
 func init() {
@@ -106,14 +74,6 @@ func init() {
 func main() {
 	ctx := context.Background()
 
-	// Parse ABI
-	var err error
-	abiObj, err := abi.JSON(strings.NewReader(contracts.ToDoABI))
-	if err != nil {
-		log.Fatalf("invalid ABI: %v", err)
-	}
-	parsedABI = &abiObj
-
 	// Connect to Ethereum (ws or http)
 	client, err := ethclient.Dial(rpcURL)
 	if err != nil {
@@ -135,11 +95,14 @@ func main() {
 	}
 	log.Println("connected to Postgres")
 
-	// Bound contract (for call + transact)
-	contract := bind.NewBoundContract(contractAddr, *parsedABI, client, client, client)
+	// Create typed contract instance
+	todoContract, err = contract.NewContract(contractAddr, client)
+	if err != nil {
+		log.Fatalf("failed to create contract instance: %v", err)
+	}
 
 	// Start event listener (background) - only if using WebSocket
-	if strings.HasPrefix(rpcURL, "wss://") || strings.HasPrefix(rpcURL, "ws://") {
+	if len(rpcURL) >= 6 && rpcURL[:6] == "wss://" || len(rpcURL) >= 5 && rpcURL[:5] == "ws://" {
 		go startEventListener(ctx, client, db)
 	} else {
 		log.Println("HTTP RPC detected - event listening disabled. Use WebSocket (wss://) for real-time events.")
@@ -160,7 +123,7 @@ func main() {
 			http.Error(w, "bad body: "+err.Error(), http.StatusBadRequest)
 			return
 		}
-		txHash, err := createTaskTx(ctx, client, contract, body.AssignedTo, body.Description, body.Date)
+		txHash, err := createTaskTx(ctx, client, body.AssignedTo, body.Description, body.Date)
 		if err != nil {
 			http.Error(w, "createTask error: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -169,23 +132,15 @@ func main() {
 	})
 
 	http.HandleFunc("/getActiveTasks", func(w http.ResponseWriter, r *http.Request) {
-		// simple call to contract.getActiveTasks()
-		var result []interface{}
+		// Call typed method
 		callOpts := &bind.CallOpts{Context: ctx}
-		err := contract.Call(callOpts, &result, "getActiveTasks")
+		tasks, err := todoContract.GetActiveTasks(callOpts)
 		if err != nil {
 			http.Error(w, "call error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// Convert result to tasks
-		tasks := make([]Task, 0, len(result))
-		for _, res := range result {
-			if task, ok := interfaceToTask(res); ok {
-				tasks = append(tasks, task)
-			}
-		}
-
+		// Convert to JSON-friendly format
 		out := make([]map[string]interface{}, 0, len(tasks))
 		for _, t := range tasks {
 			out = append(out, taskToMap(t))
@@ -246,7 +201,7 @@ func main() {
 // -----------------------
 // createTaskTx: send createTask transaction
 // -----------------------
-func createTaskTx(ctx context.Context, client *ethclient.Client, contract *bind.BoundContract, assignedToHex, description string, date uint32) (string, error) {
+func createTaskTx(ctx context.Context, client *ethclient.Client, assignedToHex, description string, date uint32) (string, error) {
 	if privateKey == "" {
 		return "", fmt.Errorf("no PRIVATE_KEY set; set env PRIVATE_KEY to send transactions")
 	}
@@ -273,7 +228,7 @@ func createTaskTx(ctx context.Context, client *ethclient.Client, contract *bind.
 
 	to := common.HexToAddress(assignedToHex)
 
-	tx, err := contract.Transact(auth, "createTask", to, description, date)
+	tx, err := todoContract.CreateTask(auth, to, description, date)
 	if err != nil {
 		return "", err
 	}
@@ -284,12 +239,6 @@ func createTaskTx(ctx context.Context, client *ethclient.Client, contract *bind.
 // event listener: subscribe to logs and insert into Postgres
 // -----------------------
 func startEventListener(ctx context.Context, client *ethclient.Client, db *sql.DB) {
-	// Precompute mapping of topic ID -> event name
-	eventMap := map[common.Hash]string{}
-	for name, ev := range parsedABI.Events {
-		eventMap[ev.ID] = name
-	}
-
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{contractAddr},
 	}
@@ -308,64 +257,99 @@ func startEventListener(ctx context.Context, client *ethclient.Client, db *sql.D
 			// exit - in production you should reconnect with backoff
 			return
 		case vLog := <-logs:
-			handleLog(ctx, db, vLog, eventMap)
+			handleLog(ctx, db, vLog)
 		}
 	}
 }
 
-func handleLog(ctx context.Context, db *sql.DB, vLog types.Log, eventMap map[common.Hash]string) {
-	ename, ok := eventMap[vLog.Topics[0]]
-	if !ok {
+func handleLog(ctx context.Context, db *sql.DB, vLog types.Log) {
+	// Determine event type from topics and parse accordingly
+	var eventName string
+	var eventData map[string]interface{}
+
+	// Define known event topic hashes
+	taskCreatedTopic := common.HexToHash("0xcaa531b147f5e32fae563951c9d50c9febedb2a677750e0f0314f94c2b50f5fa")
+	taskDeletedTopic := common.HexToHash("0x0752dde00495a9fda916c836f0f9e13b19edac46a7eebef960aa0a5cdb7736ca")
+	taskModifiedTopic := common.HexToHash("0xd6ec681ab576080c2d87a4b3d3e62b3d4e768efc8e17b814816a73b593d287cd")
+	taskStatusUpdatedTopic := common.HexToHash("0xc8aa340b5c35d853bf5df4f527973f3b7817dea792441f810a6a10fce64fc56d")
+
+	switch vLog.Topics[0] {
+	case taskCreatedTopic:
+		event, err := todoContract.ParseTaskCreated(vLog)
+		if err != nil {
+			log.Printf("parse TaskCreated error: %v", err)
+			return
+		}
+		eventName = "TaskCreated"
+		eventData = map[string]interface{}{
+			"taskId":     event.TaskId.String(),
+			"creator":    event.Creator.Hex(),
+			"assignedTo": event.AssignedTo.Hex(),
+			"date":       event.Date,
+			"status":     event.Status,
+			"timestamp":  event.Timestamp.String(),
+		}
+	case taskDeletedTopic:
+		event, err := todoContract.ParseTaskDeleted(vLog)
+		if err != nil {
+			log.Printf("parse TaskDeleted error: %v", err)
+			return
+		}
+		eventName = "TaskDeleted"
+		eventData = map[string]interface{}{
+			"taskId":    event.TaskId.String(),
+			"deletedBy": event.DeletedBy.Hex(),
+			"timestamp": event.Timestamp.String(),
+		}
+	case taskModifiedTopic:
+		event, err := todoContract.ParseTaskModified(vLog)
+		if err != nil {
+			log.Printf("parse TaskModified error: %v", err)
+			return
+		}
+		eventName = "TaskModified"
+		eventData = map[string]interface{}{
+			"taskId":             event.TaskId.String(),
+			"modifiedBy":         event.ModifiedBy.Hex(),
+			"oldDescriptionHash": common.Bytes2Hex(event.OldDescriptionHash[:]),
+			"newDescriptionHash": common.Bytes2Hex(event.NewDescriptionHash[:]),
+			"oldDate":            event.OldDate,
+			"newDate":            event.NewDate,
+			"timestamp":          event.Timestamp.String(),
+		}
+	case taskStatusUpdatedTopic:
+		event, err := todoContract.ParseTaskStatusUpdated(vLog)
+		if err != nil {
+			log.Printf("parse TaskStatusUpdated error: %v", err)
+			return
+		}
+		eventName = "TaskStatusUpdated"
+		eventData = map[string]interface{}{
+			"taskId":    event.TaskId.String(),
+			"updatedBy": event.UpdatedBy.Hex(),
+			"status":    event.Status,
+			"timestamp": event.Timestamp.String(),
+		}
+	default:
 		log.Printf("unknown event topic: %s", vLog.Topics[0].Hex())
 		return
 	}
-	// decode non-indexed args into map
-	decoded := map[string]interface{}{}
-	if err := parsedABI.UnpackIntoMap(decoded, ename, vLog.Data); err != nil {
-		// UnpackIntoMap returns error for some types sometimes; still continue
-		log.Printf("UnpackIntoMap err for %s: %v", ename, err)
-	}
 
-	// decode indexed topics
-	ev := parsedABI.Events[ename]
-	topicIdx := 1
-	for i := 0; i < len(ev.Inputs); i++ {
-		in := ev.Inputs[i]
-		if in.Indexed {
-			if topicIdx >= len(vLog.Topics) {
-				decoded[in.Name] = nil
-			} else {
-				t := vLog.Topics[topicIdx]
-				switch in.Type.T {
-				case abi.AddressTy:
-					decoded[in.Name] = common.HexToAddress(t.Hex()).Hex()
-				case abi.UintTy, abi.IntTy:
-					// big int
-					val := new(big.Int).SetBytes(t.Bytes())
-					decoded[in.Name] = val.String()
-				default:
-					decoded[in.Name] = t.Hex()
-				}
-			}
-			topicIdx++
-		}
-	}
-
-	// Final JSON
-	jb, err := json.Marshal(decoded)
+	// Convert to JSON
+	jb, err := json.Marshal(eventData)
 	if err != nil {
 		log.Printf("json marshal err: %v", err)
 		return
 	}
 
-	// insert into DB
+	// Insert into DB
 	_, err = db.ExecContext(ctx, `INSERT INTO todo_events (event_name, event_data, block_number, tx_hash) VALUES ($1,$2,$3,$4)`,
-		ename, string(jb), vLog.BlockNumber, vLog.TxHash.Hex())
+		eventName, string(jb), vLog.BlockNumber, vLog.TxHash.Hex())
 	if err != nil {
 		log.Printf("db insert err: %v", err)
 		return
 	}
-	log.Printf("stored event %s tx=%s blk=%d data=%s", ename, vLog.TxHash.Hex(), vLog.BlockNumber, string(jb))
+	log.Printf("stored event %s tx=%s blk=%d data=%s", eventName, vLog.TxHash.Hex(), vLog.BlockNumber, string(jb))
 }
 
 // -----------------------
