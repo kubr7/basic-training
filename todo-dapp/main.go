@@ -7,10 +7,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
 	"os/signal"
-
 	"syscall"
 	"time"
 
@@ -178,6 +178,88 @@ func main() {
 		json.NewEncoder(w).Encode(out)
 	})
 
+	// DELETE endpoint for deleting tasks
+	http.HandleFunc("/deleteTask", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			http.Error(w, "DELETE only", http.StatusMethodNotAllowed)
+			return
+		}
+		var body struct {
+			TaskId string `json:"taskId"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			http.Error(w, "bad body: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		if body.TaskId == "" {
+			http.Error(w, "taskId is required", http.StatusBadRequest)
+			return
+		}
+		txHash, err := deleteTaskTx(ctx, client, body.TaskId)
+		if err != nil {
+			http.Error(w, "deleteTask error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]string{"txHash": txHash})
+	})
+
+	// PUT endpoint for modifying tasks
+	http.HandleFunc("/modifyTask", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			http.Error(w, "PUT only", http.StatusMethodNotAllowed)
+			return
+		}
+		var body struct {
+			TaskId         string `json:"taskId"`
+			NewDescription string `json:"newDescription"`
+			NewDate        uint32 `json:"newDate"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			http.Error(w, "bad body: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		if body.TaskId == "" {
+			http.Error(w, "taskId is required", http.StatusBadRequest)
+			return
+		}
+		if body.NewDescription == "" {
+			http.Error(w, "newDescription is required", http.StatusBadRequest)
+			return
+		}
+		txHash, err := modifyTaskTx(ctx, client, body.TaskId, body.NewDescription, body.NewDate)
+		if err != nil {
+			http.Error(w, "modifyTask error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]string{"txHash": txHash})
+	})
+
+	// PATCH endpoint for updating task status
+	http.HandleFunc("/updateTaskStatus", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPatch {
+			http.Error(w, "PATCH only", http.StatusMethodNotAllowed)
+			return
+		}
+		var body struct {
+			TaskId    string `json:"taskId"`
+			NewStatus uint8  `json:"newStatus"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			http.Error(w, "bad body: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		if body.TaskId == "" {
+			http.Error(w, "taskId is required", http.StatusBadRequest)
+			return
+		}
+		txHash, err := updateTaskStatusTx(ctx, client, body.TaskId, body.NewStatus)
+		if err != nil {
+			http.Error(w, "updateTaskStatus error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]string{"txHash": txHash})
+	})
+
 	// Start server in goroutine
 	srv := &http.Server{Addr: ":8080"}
 
@@ -219,16 +301,105 @@ func createTaskTx(ctx context.Context, client *ethclient.Client, assignedToHex, 
 		return "", err
 	}
 
-	// Suggest gas price
-	gp, err := client.SuggestGasPrice(ctx)
-	if err == nil {
-		auth.GasPrice = gp
-	}
-	auth.GasLimit = uint64(400000) // ok for createTask but adjust if needed
-
 	to := common.HexToAddress(assignedToHex)
 
 	tx, err := todoContract.CreateTask(auth, to, description, date)
+	if err != nil {
+		return "", err
+	}
+	return tx.Hash().Hex(), nil
+}
+
+// -----------------------
+// deleteTaskTx: send deleteTask transaction
+// -----------------------
+func deleteTaskTx(ctx context.Context, client *ethclient.Client, taskId string) (string, error) {
+	if privateKey == "" {
+		return "", fmt.Errorf("no PRIVATE_KEY set; set env PRIVATE_KEY to send transactions")
+	}
+	priv, err := cryptoHexToECDSA(privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	chainID, err := client.NetworkID(ctx)
+	if err != nil {
+		return "", err
+	}
+	auth, err := bind.NewKeyedTransactorWithChainID(priv, chainID)
+	if err != nil {
+		return "", err
+	}
+
+	// Convert taskId string to big.Int
+	taskIdBigInt := new(big.Int)
+	taskIdBigInt.SetString(taskId, 10)
+
+	tx, err := todoContract.DeleteTask(auth, taskIdBigInt)
+	if err != nil {
+		return "", err
+	}
+	return tx.Hash().Hex(), nil
+}
+
+// -----------------------
+// modifyTaskTx: send modifyTask transaction
+// -----------------------
+func modifyTaskTx(ctx context.Context, client *ethclient.Client, taskId, newDescription string, newDate uint32) (string, error) {
+	if privateKey == "" {
+		return "", fmt.Errorf("no PRIVATE_KEY set; set env PRIVATE_KEY to send transactions")
+	}
+	priv, err := cryptoHexToECDSA(privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	chainID, err := client.NetworkID(ctx)
+	if err != nil {
+		return "", err
+	}
+	auth, err := bind.NewKeyedTransactorWithChainID(priv, chainID)
+	if err != nil {
+		return "", err
+	}
+
+	// Convert taskId string to big.Int
+	taskIdBigInt := new(big.Int)
+	taskIdBigInt.SetString(taskId, 10)
+
+	tx, err := todoContract.ModifyTask(auth, taskIdBigInt, newDescription, newDate)
+	if err != nil {
+		return "", err
+	}
+	return tx.Hash().Hex(), nil
+}
+
+// -----------------------
+// updateTaskStatusTx: send updateTaskStatus transaction
+// -----------------------
+func updateTaskStatusTx(ctx context.Context, client *ethclient.Client, taskId string, newStatus uint8) (string, error) {
+	if privateKey == "" {
+		return "", fmt.Errorf("no PRIVATE_KEY set; set env PRIVATE_KEY to send transactions")
+	}
+	priv, err := cryptoHexToECDSA(privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	chainID, err := client.NetworkID(ctx)
+	if err != nil {
+		return "", err
+	}
+	auth, err := bind.NewKeyedTransactorWithChainID(priv, chainID)
+	if err != nil {
+		return "", err
+	}
+
+	// Convert taskId string to big.Int
+	taskIdBigInt := new(big.Int)
+	taskIdBigInt.SetString(taskId, 10)
+
+	tx, err := todoContract.UpdateTaskStatus(auth, taskIdBigInt, newStatus)
 	if err != nil {
 		return "", err
 	}
@@ -263,23 +434,13 @@ func startEventListener(ctx context.Context, client *ethclient.Client, db *sql.D
 }
 
 func handleLog(ctx context.Context, db *sql.DB, vLog types.Log) {
-	// Determine event type from topics and parse accordingly
 	var eventName string
 	var eventData map[string]interface{}
 
-	// Define known event topic hashes
-	taskCreatedTopic := common.HexToHash("0xcaa531b147f5e32fae563951c9d50c9febedb2a677750e0f0314f94c2b50f5fa")
-	taskDeletedTopic := common.HexToHash("0x0752dde00495a9fda916c836f0f9e13b19edac46a7eebef960aa0a5cdb7736ca")
-	taskModifiedTopic := common.HexToHash("0xd6ec681ab576080c2d87a4b3d3e62b3d4e768efc8e17b814816a73b593d287cd")
-	taskStatusUpdatedTopic := common.HexToHash("0xc8aa340b5c35d853bf5df4f527973f3b7817dea792441f810a6a10fce64fc56d")
+	// Try to parse the log as each event type using the generated bindings
+	// The parse methods will return an error if the log doesn't match the event signature
 
-	switch vLog.Topics[0] {
-	case taskCreatedTopic:
-		event, err := todoContract.ParseTaskCreated(vLog)
-		if err != nil {
-			log.Printf("parse TaskCreated error: %v", err)
-			return
-		}
+	if event, err := todoContract.ParseTaskCreated(vLog); err == nil {
 		eventName = "TaskCreated"
 		eventData = map[string]interface{}{
 			"taskId":     event.TaskId.String(),
@@ -289,24 +450,14 @@ func handleLog(ctx context.Context, db *sql.DB, vLog types.Log) {
 			"status":     event.Status,
 			"timestamp":  event.Timestamp.String(),
 		}
-	case taskDeletedTopic:
-		event, err := todoContract.ParseTaskDeleted(vLog)
-		if err != nil {
-			log.Printf("parse TaskDeleted error: %v", err)
-			return
-		}
+	} else if event, err := todoContract.ParseTaskDeleted(vLog); err == nil {
 		eventName = "TaskDeleted"
 		eventData = map[string]interface{}{
 			"taskId":    event.TaskId.String(),
 			"deletedBy": event.DeletedBy.Hex(),
 			"timestamp": event.Timestamp.String(),
 		}
-	case taskModifiedTopic:
-		event, err := todoContract.ParseTaskModified(vLog)
-		if err != nil {
-			log.Printf("parse TaskModified error: %v", err)
-			return
-		}
+	} else if event, err := todoContract.ParseTaskModified(vLog); err == nil {
 		eventName = "TaskModified"
 		eventData = map[string]interface{}{
 			"taskId":             event.TaskId.String(),
@@ -317,12 +468,7 @@ func handleLog(ctx context.Context, db *sql.DB, vLog types.Log) {
 			"newDate":            event.NewDate,
 			"timestamp":          event.Timestamp.String(),
 		}
-	case taskStatusUpdatedTopic:
-		event, err := todoContract.ParseTaskStatusUpdated(vLog)
-		if err != nil {
-			log.Printf("parse TaskStatusUpdated error: %v", err)
-			return
-		}
+	} else if event, err := todoContract.ParseTaskStatusUpdated(vLog); err == nil {
 		eventName = "TaskStatusUpdated"
 		eventData = map[string]interface{}{
 			"taskId":    event.TaskId.String(),
@@ -330,8 +476,8 @@ func handleLog(ctx context.Context, db *sql.DB, vLog types.Log) {
 			"status":    event.Status,
 			"timestamp": event.Timestamp.String(),
 		}
-	default:
-		log.Printf("unknown event topic: %s", vLog.Topics[0].Hex())
+	} else {
+		log.Printf("unknown event - could not parse log with any known event signature")
 		return
 	}
 
