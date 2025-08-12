@@ -11,8 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/yourname/todo-dapp/contract"
-	"github.com/yourname/todo-dapp/internal/config"
+	"github.com/kubr7/to-do-dapp/contract"
+	"github.com/kubr7/to-do-dapp/internal/config"
 )
 
 type BlockchainService struct {

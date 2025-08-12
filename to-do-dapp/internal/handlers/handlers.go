@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yourname/todo-dapp/internal/services"
+	"github.com/kubr7/to-do-dapp/internal/services"
 )
 
 type TaskHandler struct {
