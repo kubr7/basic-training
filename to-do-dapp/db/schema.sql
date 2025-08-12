@@ -1,7 +1,12 @@
 -- create DB and tables (run in your Postgres)
-CREATE DATABASE tododappdb;
-
-\c tododappdb;
+CREATE TABLE IF NOT EXISTS todos (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT,
+  completed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
 
 CREATE TABLE IF NOT EXISTS todo_events (
   id SERIAL PRIMARY KEY,
