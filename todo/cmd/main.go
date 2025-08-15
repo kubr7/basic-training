@@ -9,20 +9,20 @@ import (
 )
 
 func main() {
-	fmt.Println("Hello, GO")
+	fmt.Println("Hello, ToDo!")
 
 	err := godotenv.Load()
 	if err != nil {
 		log.Printf("Warning: Error loading .env file: %v", err)
 	}
 
-	eth_rpc := os.Getenv("RPC_ETH")
+	eth_rpc := os.Getenv("ETH_RPC")
 	if eth_rpc == "" {
-		log.Fatal("RPC_ETH environment variable is not set")
+		log.Fatal("ETH_RPC environment variable is not set")
 	}
-	contractAddr := os.Getenv("CONTRACT_ADDR")
+	contractAddr := os.Getenv("TODO_CONTRACT_ADDR")
 	if contractAddr == "" {
-		log.Fatal("CONTRACT_ADDR environment variable is not set")
+		log.Fatal("TODO_CONTRACT_ADDR environment variable is not set")
 	}
 
 	fmt.Printf("Using Ethereum RPC: %s\n", eth_rpc)
