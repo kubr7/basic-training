@@ -1,0 +1,378 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0xE925C8Fec3F952421144Bdc408B38Be9f1F786Be",
+      "txHash": "0xe2733215eb2536d8781e6729f9b0c8e1e784888aa472d1fd629cbfcd3c063413",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "fab8fe26f89febfb8a4da9d17febf1b9a2eea5c0add8e401be0d27702b9f87eb": {
+      "address": "0xdf983170bdD2077D4921411340d4A9D999d70026",
+      "txHash": "0x5dbce4d26612d82819cd73b902c4b7229864fcfd0751b6f3acc9363f7ce0e86e",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "taskCount",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint256",
+            "contract": "ToDoContract",
+            "src": "contracts/ToDoContract.sol:22"
+          },
+          {
+            "label": "tasks",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_uint256,t_struct(Task)293_storage)",
+            "contract": "ToDoContract",
+            "src": "contracts/ToDoContract.sol:23"
+          },
+          {
+            "label": "userTaskIds",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
+            "contract": "ToDoContract",
+            "src": "contracts/ToDoContract.sol:24"
+          },
+          {
+            "label": "dateTaskIds",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_uint32,t_array(t_uint256)dyn_storage)",
+            "contract": "ToDoContract",
+            "src": "contracts/ToDoContract.sol:25"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)7_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]",
+            "numberOfBytes": "32"
+          },
+          "t_enum(TaskStatus)275": {
+            "label": "enum ToDoContract.TaskStatus",
+            "members": [
+              "Pending",
+              "Completed"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
+            "label": "mapping(address => uint256[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(Task)293_storage)": {
+            "label": "mapping(uint256 => struct ToDoContract.Task)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint32,t_array(t_uint256)dyn_storage)": {
+            "label": "mapping(uint32 => uint256[])",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Task)293_storage": {
+            "label": "struct ToDoContract.Task",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "creator",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "assignedTo",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "description",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "date",
+                "type": "t_uint32",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(TaskStatus)275",
+                "offset": 4,
+                "slot": "4"
+              },
+              {
+                "label": "isDeleted",
+                "type": "t_bool",
+                "offset": 5,
+                "slot": "4"
+              },
+              {
+                "label": "isModified",
+                "type": "t_bool",
+                "offset": 6,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "160"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint32": {
+            "label": "uint32",
+            "numberOfBytes": "4"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "dfa3bc3a4fc82385ff00ef1b5b4b03e4bcb92ac4641744e929b3358b658fa4e2": {
+      "address": "0x4c938e6e6D00Fdc5Fa050c23374d64aEc2412Cd8",
+      "txHash": "0x7c883cb4de6adec57a906ddd97c4f9ae733ec5f3d18ebbdd57605a6702693250",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "taskCount",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint256",
+            "contract": "ToDoContract",
+            "src": "contracts/ToDoContract.sol:22"
+          },
+          {
+            "label": "tasks",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_uint256,t_struct(Task)293_storage)",
+            "contract": "ToDoContract",
+            "src": "contracts/ToDoContract.sol:23"
+          },
+          {
+            "label": "userTaskIds",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
+            "contract": "ToDoContract",
+            "src": "contracts/ToDoContract.sol:24"
+          },
+          {
+            "label": "dateTaskIds",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_uint32,t_array(t_uint256)dyn_storage)",
+            "contract": "ToDoContract",
+            "src": "contracts/ToDoContract.sol:25"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)7_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]",
+            "numberOfBytes": "32"
+          },
+          "t_enum(TaskStatus)275": {
+            "label": "enum ToDoContract.TaskStatus",
+            "members": [
+              "Pending",
+              "Completed"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
+            "label": "mapping(address => uint256[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(Task)293_storage)": {
+            "label": "mapping(uint256 => struct ToDoContract.Task)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint32,t_array(t_uint256)dyn_storage)": {
+            "label": "mapping(uint32 => uint256[])",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Task)293_storage": {
+            "label": "struct ToDoContract.Task",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "creator",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "assignedTo",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "description",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "date",
+                "type": "t_uint32",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(TaskStatus)275",
+                "offset": 4,
+                "slot": "4"
+              },
+              {
+                "label": "isDeleted",
+                "type": "t_bool",
+                "offset": 5,
+                "slot": "4"
+              },
+              {
+                "label": "isModified",
+                "type": "t_bool",
+                "offset": 6,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "160"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint32": {
+            "label": "uint32",
+            "numberOfBytes": "4"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
